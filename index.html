@@ -89,6 +89,24 @@ main{padding:0 16px 72px;max-width:720px;margin:0 auto}
 .rm .bar{margin:5px 0 3px;height:6px}
 .rm .meta{color:var(--muted);font-size:.78rem}
 .spark{display:block;width:100%;height:26px;margin:2px 0}
+/* CT шинжилгээ */
+.exgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exbox{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 10px;text-align:center}
+.exl{font-weight:600}.exl small{display:block;color:var(--muted);font-weight:400;font-size:.78rem}
+.exnum{font-size:3.4rem;font-weight:600;line-height:1.1;margin:8px 0;font-variant-numeric:tabular-nums;color:var(--pri)}
+.exbtns{display:flex;justify-content:center;gap:14px}
+.exb{width:60px;height:60px;border-radius:50%;font-size:1.9rem;line-height:1;background:var(--card);border:3px solid}
+.exb.plus{border-color:var(--pri);color:var(--pri)}.exb.minus{border-color:var(--line);color:var(--muted)}
+.exb:active{transform:scale(.94)}
+.extot{text-align:center;margin:12px 0 4px;font-size:1.05rem}
+.extab{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.92rem}
+.extab th{color:var(--muted);font-weight:500;font-size:.8rem;text-align:right;padding:4px 6px}.extab th:first-child,.extab td:first-child{text-align:left}
+.extab td{text-align:right;padding:8px 6px;border-top:1px solid var(--line);cursor:pointer}
+.extab tr.on td{background:var(--pri-soft)}.extab tr.sum td{font-weight:700;cursor:default}
+.exmini{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.exm{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:12px;padding:8px 10px}
+.exm span{flex:1;font-size:.82rem;color:var(--muted)}.exm b{min-width:22px;text-align:center;font-size:1.1rem}
+.exm button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:1.2rem;line-height:1;color:var(--pri)}
 /* Тоон товчлуур */
 .kp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .kp-top input{width:auto;padding:6px 10px}
@@ -279,10 +297,11 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.4.0';
+const VERSION='1.5.0';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
-  ot:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:''},notified:{}};
+  ot:[],exams:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',examUrl:'',examKey:'',examName:'',examRemind:'20:00',examLink:''},notified:{}};
+const EXAM_LINK='https://docs.google.com/spreadsheets/d/1Cydu4P2CNALnXbmuBVTrnzQDd-NcQgse_oOkfZKvgC0/edit';
 const SHEET_LINK='https://docs.google.com/spreadsheets/d/1seWg1MBaKH9GCyZ6A-U-omfMONuJNxLg/edit';
 const shiftLink=()=>D.settings.shiftLink||SHEET_LINK;
 function load(){
@@ -344,6 +363,7 @@ function parseQuick(raw){
     return {kind:'note',title:body.split('\n')[0].slice(0,60),body,tags:(body.match(/#[^\s#]+/g)||[]).map(t=>t.slice(1))};
   }
   if(/илүү\s*цаг/i.test(src))return parseOT(src);
+  if(/(^|\s)(ct|ce|ст|се)\s*[:=-]?\s*\d|тодосгогч/i.test(src))return parseExam(src);
   if(m=src.match(/^(авах|дэлгүүр|худалдаж авах)\s*[:：]\s*([\s\S]*)$/i)){
     return {kind:'shop',list:m[2].split(/[,;\n]/).map(x=>x.trim()).filter(Boolean)};
   }
@@ -416,6 +436,13 @@ function parseOT(src){
   else if(m=s.match(/\s(\d+(?:[.,]\d+)?)\s*(цаг\S*|ц)?(?=\s)/)){hours=parseFloat(m[1].replace(',','.'));s=s.replace(m[0],' ')}
   return {kind:'ot',date,start,end,hours,note:s.replace(/\s+/g,' ').trim()};
 }
+// CT шинжилгээ: "ct 3 ce 6", "тодосгогчгүй 3 тодосгогчтой 6", "өчигдөр ce 4" — тухайн өдрийн нийт тоо
+function parseExam(src){
+  const L=' '+src.toLowerCase()+' ';let date=today();
+  if(/\sөчигдөр/.test(L))date=addDays(date,-1);
+  const g=re=>{const m=L.match(re);return m?+m[2]:null};
+  return {kind:'exam',date,ct:g(/(ct|ст|тодосгогчгүй|тодгүй)\s*[:=-]?\s*(\d+)/),ce:g(/(ce|се|тодосгогчтой|тодтой)\s*[:=-]?\s*(\d+)/)};
+}
 function mkDate(mo,da){
   if(mo<1||mo>12||da<1||da>31)return null;
   const n=now();let y=n.getFullYear();
@@ -486,7 +513,7 @@ function render(){
   document.documentElement.style.setProperty('--fs',(D.settings.fs||16)+'px');
   const th=D.settings.theme;if(th==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=th;
   if(VIEW==='grp'&&!groups()[UI.grp])VIEW='home';
-  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='ot'?'Илүү цаг':VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
+  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='ot'?'Илүү цаг':VIEW==='exam'?'CT шинжилгээ':VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
   const inGrp=VIEW==='grp'||!!UI.back;
   $('#navBtn').innerHTML=`<svg viewBox="0 0 24 24">${inGrp?TILE_ICONS.back:'<path d="M4 7h16M4 12h16M4 17h16"/>'}</svg>`;
   $('#navBtn').setAttribute('aria-label',inGrp?'Буцах':'Цэс');
@@ -495,7 +522,7 @@ function render(){
   const navOn=VIEW==='grp'||UI.back?'home':VIEW;
   $('.fab').classList.toggle('hidden',VIEW==='money'&&!UI.sec); // санхүүд өөрийн −/+ товч бий
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===navOn));
-  $('#view').innerHTML=({home:vHome,grp:vGroup,ot:vOT,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
+  $('#view').innerHTML=({home:vHome,grp:vGroup,ot:vOT,exam:vExam,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
   hydrateImgs($('#view'));
   if(VIEW==='notes'){const q=$('#noteQ');if(q&&UI._focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
 }
@@ -532,6 +559,7 @@ Object.assign(TILE_ICONS,{
   link:'<path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
   logout:'<path d="M14 4.5h4.5A1.5 1.5 0 0 1 20 6v12a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
+  scan:'<circle class="f" cx="12" cy="11" r="8"/><circle cx="12" cy="11" r="3.5"/><path d="M3 20.5h18M7 17.5l-1.5 3M17 17.5l1.5 3"/>',
   clock:'<circle class="f" cx="12" cy="12.5" r="8"/><path d="M12 8v4.5l3 2M9.5 2.5h5"/>',
   camera:'<path class="f" d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3l1.5-2h5.4l1.5 2h2.3A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/>'});
 // Нүүрний 5 бүлэг → дотор нь ангиллууд. go: очих газар, sec: зөвхөн тухайн хэсгийг харуулах, act: маягт нээх
@@ -545,6 +573,7 @@ function groups(){
     ajil:{l:'Ажил',ic:'ajil',subs:[
       {k:'today',l:'Ажлын төлөвлөгөө',n:pend('ajil'),go:()=>goPlan('ajil')},
       {k:'link',l:'Ээлжийн хуваарь ↗',act:()=>window.open(shiftLink(),'_blank')},
+      {k:'scan',l:'CT шинжилгээ',n:examMissing(),go:()=>{UI.exDay=null;setView('exam')}},
       {k:'clock',l:'Илүү цаг',go:()=>{UI.otMonth=null;setView('ot')}},
       {k:'plus',l:'Ажил нэмэх',act:()=>itemForm(null,{cat:'ajil',date:today()})},
       {k:'today',l:'Уулзалт нэмэх',act:()=>itemForm(null,{cat:'ajil',type:'event',date:today()})}]},
@@ -579,7 +608,7 @@ function vHome(){
   const greet=h<5?'Сайхан амраарай':h<12?'Өглөөний мэнд':h<18?'Өдрийн мэнд':'Оройн мэнд';
   const G=groups();
   return `<div class="homehead"><div class="hello">${greet}${D.settings.name?', '+esc(D.settings.name):''}</div><div class="sub">${longDate(today())}</div></div>
-    <div class="tiles">${Object.entries(G).map(([k,g],idx,arr)=>`<button class="tile${idx===arr.length-1&&arr.length%2?' wide':''}" onclick="openGroup('${k}')"><svg viewBox="0 0 24 24">${TILE_ICONS[g.ic]}</svg>${badge(sumN(g))}<span>${g.l}</span></button>`).join('')}</div>`+homeTodo();
+    <div class="tiles">${Object.entries(G).map(([k,g],idx,arr)=>`<button class="tile${idx===arr.length-1&&arr.length%2?' wide':''}" onclick="openGroup('${k}')"><svg viewBox="0 0 24 24">${TILE_ICONS[g.ic]}</svg>${badge(sumN(g))}<span>${g.l}</span></button>`).join('')}</div>`+examMini()+homeTodo();
 }
 // Нүүрний доод хэсэг: өнөөдөр хийх ажлын жагсаалт
 function homeTodo(){
@@ -653,6 +682,104 @@ async function otShare(mo){
   try{await navigator.clipboard.writeText(text);toast('Нэгтгэлийг хуулсан — чат, имэйлд буулгаарай')}
   catch(e){openSheet(`<h3>Нэгтгэл</h3><textarea rows="12" readonly>${esc(text)}</textarea><div class="row-btns"><span class="sp"></span><button class="btn primary" onclick="closeSheet()">Хаах</button></div>`)}
 }
+
+/* ---------- CT шинжилгээний тоо → хүснэгт ---------- */
+const EXQ_KEY=KEY+'.exq';
+const examGet=d=>(D.exams||[]).find(x=>x.date===d);
+const examLink=()=>D.settings.examLink||EXAM_LINK;
+function examSet(d,ct,ce){
+  D.exams=D.exams||[];let x=examGet(d);
+  ct=Math.max(0,Math.round(+ct||0));ce=Math.max(0,Math.round(+ce||0));
+  if(!ct&&!ce){D.exams=D.exams.filter(e=>e.date!==d)}
+  else{if(!x){x={id:d,date:d};D.exams.push(x)}x.ct=ct;x.ce=ce;x.updated=Date.now()}
+  examDirty(d);save();
+}
+function examAdd(d,k,delta){const x=examGet(d)||{ct:0,ce:0};const v={ct:x.ct||0,ce:x.ce||0};v[k]=Math.max(0,v[k]+delta);examSet(d,v.ct,v.ce);render()}
+// Ажлын өдөр (Да–Ба) өнгөрсөн цагт тоо оруулаагүй бол тэмдэг харуулна
+function examMissing(){const s=D.settings;if(!s.examName)return 0;const n=now();const t=today();const wd=n.getDay();
+  return (wd>=1&&wd<=5&&n.getHours()>=17&&!examGet(t))?1:0}
+// Илгээх дараалал: өөрчлөгдсөн өдрүүдийг хүснэгт рүү (интернетгүй бол дараа нь)
+function examDirty(d){const q=new Set(lsGet(EXQ_KEY)||[]);q.add(d);lsSet(EXQ_KEY,[...q]);clearTimeout(examDirty.t);examDirty.t=setTimeout(examPush,2500)}
+let examState={s:'',at:0,msg:''};
+async function examPush(){
+  const s=D.settings;const q=lsGet(EXQ_KEY)||[];
+  if(!q.length||!s.examUrl||!s.examName||examPush.busy)return;
+  if(navigator.onLine===false){examState={s:'wait'};scheduleRender();return}
+  examPush.busy=true;examState={s:'sending'};
+  const items=q.map(d=>{const x=examGet(d)||{};return {date:d,ct:x.ct||0,ce:x.ce||0}});
+  try{
+    const r=await fetch(s.examUrl,{method:'POST',body:JSON.stringify({key:s.examKey,name:s.examName,items})});
+    const j=await r.json();if(j.error)throw new Error(j.error);
+    const res=j.res||[];const bad=res.filter(x=>x.error);
+    // амжилттай илгээснийг (илгээх зуур дахин өөрчлөгдөөгүй бол) дарааллаас хасна
+    const sent=new Map(items.map(i=>[i.date,i.ct+'/'+i.ce]));const okD=new Set(res.filter(x=>x.ok).map(x=>x.date));
+    lsSet(EXQ_KEY,(lsGet(EXQ_KEY)||[]).filter(d=>{if(!okD.has(d))return true;const x=examGet(d)||{};return (x.ct||0)+'/'+(x.ce||0)!==sent.get(d)}));
+    examState=bad.length?{s:'error',msg:bad.map(b=>b.error).filter((v,i,a)=>a.indexOf(v)===i).join('; ')}:{s:'ok',at:Date.now()};
+  }catch(e){examState={s:'error',msg:e.message||'Илгээж чадсангүй'}}
+  finally{examPush.busy=false;scheduleRender();if((lsGet(EXQ_KEY)||[]).length&&examState.s==='ok')setTimeout(examPush,1500)}
+}
+function examStatus(){
+  const s=D.settings;if(!s.examUrl||!s.examName)return `<button class="lnk" onclick="openExamSetup()">⚙️ Хүснэгттэй холбох</button>`;
+  const q=(lsGet(EXQ_KEY)||[]).length;
+  if(examState.s==='sending')return '<span class="small">⏳ Хүснэгтэд илгээж байна…</span>';
+  if(examState.s==='error')return `<span class="small" style="color:var(--bad)">⚠️ ${esc(examState.msg)}</span> <button class="lnk" onclick="examPush()">Дахин оролдох</button>`;
+  if(q)return `<span class="small">⏳ ${q} өдөр илгээгдэхийг хүлээж байна${navigator.onLine===false?' (интернетгүй)':''}</span>`;
+  return `<span class="small" style="color:var(--ok)">✓ Хүснэгтэд орсон${examState.at?' · '+pad(new Date(examState.at).getHours())+':'+pad(new Date(examState.at).getMinutes()):''}</span>`;
+}
+function examMini(){
+  const s=D.settings;const t=today();const x=examGet(t)||{ct:0,ce:0};
+  if(!s.examName&&!(D.exams||[]).length)return '';
+  const b=(k,l)=>`<div class="exm"><span>${l}</span><button onclick="examAdd(today(),'${k}',-1)" aria-label="${l} хасах">−</button><b>${x[k]||0}</b><button onclick="examAdd(today(),'${k}',1)" aria-label="${l} нэмэх">+</button></div>`;
+  return `<div class="card"><h2>CT шинжилгээ — өнөөдөр<span class="sp"></span><button class="lnk" onclick="UI.exDay=null;setView('exam')">Дэлгэрэнгүй →</button></h2>
+    <div class="exmini">${b('ct','Тодосгогчгүй')}${b('ce','Тодосгогчтой')}</div><div style="margin-top:6px">${examStatus()}</div></div>`;
+}
+function vExam(){
+  const t=today();const d=UI.exDay||t;const x=examGet(d)||{ct:0,ce:0};
+  const mo=ym(d);const [y,m]=mo.split('-').map(Number);const L=(D.exams||[]).filter(e=>ym(e.date)===mo).sort((a,b)=>a.date.localeCompare(b.date));
+  const tct=L.reduce((a,e)=>a+(e.ct||0),0),tce=L.reduce((a,e)=>a+(e.ce||0),0);
+  const box=(k,l,sub)=>`<div class="exbox"><div class="exl">${l}<small>${sub}</small></div><div class="exnum">${x[k]||0}</div>
+    <div class="exbtns"><button class="exb minus" onclick="examAdd('${d}','${k}',-1)" aria-label="хасах">−</button><button class="exb plus" onclick="examAdd('${d}','${k}',1)" aria-label="нэмэх">+</button></div></div>`;
+  let out=`<div class="mnav"><button class="lnk" onclick="UI.exDay='${addDays(d,-1)}';render()">‹ Өмнөх</button><b>${dayLabel(d)}${d!==t?'':' · '+(parseD(d).getMonth()+1)+'/'+parseD(d).getDate()}</b><button class="lnk" onclick="UI.exDay='${addDays(d,1)}';render()" ${d>=t?'disabled style="opacity:.3"':''}>Дараах ›</button></div>
+    <div class="exgrid">${box('ct','Тодосгогчгүй','CT')}${box('ce','Тодосгогчтой','CE')}</div>
+    <div class="extot">Нийт <b>${(x.ct||0)+(x.ce||0)}</b> <button class="lnk" onclick="examEdit('${d}')">✎ Тоогоор засах</button></div>
+    <div style="text-align:center;margin:4px 0 14px">${examStatus()}</div>`;
+  out+=`<div class="card"><h2>${y} оны ${m} сар<span class="sp"></span><span class="small">CT ${tct} · CE ${tce} · нийт ${tct+tce}</span></h2>
+    ${L.length?`<table class="extab"><tr><th>Өдөр</th><th>CT</th><th>CE</th><th>Нийт</th></tr>${L.slice().reverse().map(e=>`<tr onclick="UI.exDay='${e.date}';render();window.scrollTo(0,0)" class="${e.date===d?'on':''}"><td>${dayLabel(e.date)}</td><td>${e.ct||''}</td><td>${e.ce||''}</td><td><b>${(e.ct||0)+(e.ce||0)}</b></td></tr>`).join('')}
+      <tr class="sum"><td>Нийт</td><td>${tct}</td><td>${tce}</td><td>${tct+tce}</td></tr></table>`:'<div class="empty">Энэ сард бичлэг алга.</div>'}
+    <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="window.open(examLink(),'_blank')">Хүснэгт нээх ↗</button><button class="btn sm" onclick="examResend('${mo}')" ${L.length&&D.settings.examName?'':'disabled'}>Сарыг дахин илгээх</button><button class="btn sm ghost" onclick="openExamSetup()">Тохиргоо</button></div></div>`;
+  return out;
+}
+function examEdit(d){const x=examGet(d)||{};openForm({title:'CT шинжилгээ · '+dayLabel(d),fields:[[{k:'ct',l:'Тодосгогчгүй (CT)',type:'number',value:x.ct||0},{k:'ce',l:'Тодосгогчтой (CE)',type:'number',value:x.ce||0}]],onSave:o=>{examSet(d,o.ct,o.ce)}})}
+function examResend(mo){(D.exams||[]).filter(e=>ym(e.date)===mo).forEach(e=>examDirty(e.date));toast('Сарын бүх өдрийг дахин илгээж байна…')}
+function openExamSetup(){
+  const s=D.settings;const ppl=UI.exNames||(s.examName?[s.examName]:[]);
+  openSheet(`<h3>CT шинжилгээний хүснэгт</h3>
+    <div class="small" style="margin-bottom:10px">Бичсэн тоо тань “RT exam CT” хүснэгтийн тухайн өдөр, таны нэрийн CT/CE нүдэнд автоматаар орно. Тохируулах заавар: Documents\\minii-udur\\apps-script\\ЗААВАР.txt</div>
+    <div class="fld"><label>Apps Script холбоос</label><input id="eUrl" value="${esc(s.examUrl)}" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="fld"><label>Түлхүүр</label><input id="eKey" value="${esc(s.examKey)}" autocomplete="off"></div>
+    <div class="fld2"><div class="fld"><label>Та хэн бэ?</label><select id="eName"><option value="">${ppl.length?'— сонгох —':'“Нэрс татах” дарна уу'}</option>${ppl.map(p=>`<option ${p===s.examName?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="fld"><label>Орой сануулах</label><input id="eRem" type="time" value="${esc(s.examRemind||'')}"></div></div>
+    <div class="fld"><label>Хүснэгтийн холбоос</label><input id="eLink" value="${esc(s.examLink||'')}" placeholder="${esc(EXAM_LINK)}"></div>
+    <div id="eMsg" class="small"></div>
+    <div class="row-btns"><button class="btn ghost" onclick="examFetchNames()">Нэрс татах</button><span class="sp"></span><button class="btn ghost" onclick="closeSheet()">Хаах</button><button class="btn primary" onclick="examSaveSetup()">Хадгалах</button></div>`);
+}
+async function examFetchNames(){
+  const url=$('#eUrl').value.trim(),key=$('#eKey').value.trim();
+  if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)){$('#eMsg').textContent='Apps Script холбоос буруу байна.';return}
+  $('#eMsg').textContent='Татаж байна…';
+  try{const j=await (await fetch(url+(url.includes('?')?'&':'?')+'key='+encodeURIComponent(key)+'&t='+Date.now())).json();if(j.error)throw new Error(j.error);
+    UI.exNames=j.names;const keep={url,key,rem:$('#eRem').value,link:$('#eLink').value};
+    openExamSetup();$('#eUrl').value=keep.url;$('#eKey').value=keep.key;$('#eRem').value=keep.rem;$('#eLink').value=keep.link;
+    $('#eMsg').textContent='✓ '+j.sheet+' хуудаснаас '+j.names.length+' нэр олдлоо. Өөрийгөө сонгоно уу.';$('#eMsg').style.color='var(--ok)'}
+  catch(e){$('#eMsg').textContent='⚠️ '+e.message;$('#eMsg').style.color='var(--bad)'}
+}
+function examSaveSetup(){
+  const s=D.settings;s.examUrl=$('#eUrl').value.trim();s.examKey=$('#eKey').value.trim();s.examName=$('#eName').value;s.examRemind=$('#eRem').value;
+  s.examLink=/^https?:\/\//.test($('#eLink').value.trim())?$('#eLink').value.trim():'';
+  save();closeSheet();render();
+  if(s.examUrl&&s.examName){toast('Хадгаллаа');if((lsGet(EXQ_KEY)||[]).length)examPush()}else toast('Хадгаллаа — нэрээ сонгосны дараа илгээж эхэлнэ');
+}
+setInterval(()=>{if((lsGet(EXQ_KEY)||[]).length)examPush()},5*60000);
 
 /* ---------- Хажуугийн цэс, хонх ---------- */
 function openMenu(){
@@ -1273,6 +1400,7 @@ function openQuick(){
 function qDescribe(p){
   if(!p)return '<span class="small">Бичихэд юу үүсгэхийг энд харуулна.</span>';
   if(p.kind==='note')return `<span class="k">📝 Тэмдэглэл</span> — ${esc(p.title)}${p.tags.length?' · '+p.tags.map(t=>'#'+esc(t)).join(' '):''}`;
+  if(p.kind==='exam')return `<span class="k">🩻 CT шинжилгээ</span> · ${dayLabel(p.date)} · Тодосгогчгүй <b>${p.ct??'—'}</b> · Тодосгогчтой <b>${p.ce??'—'}</b><br><span class="small">Өдрийн нийт тоогоор хадгалж, хүснэгтэд илгээнэ</span>`;
   if(p.kind==='ot')return `<span class="k">⏱ Илүү цаг</span> · ${dayLabel(p.date)} · ${p.hours?'<b>'+fmtH(p.hours)+' цаг</b>':'<b>цагаа оруулна</b>'}${p.start?' ('+p.start+'–'+p.end+')':''}${p.note?' — '+esc(p.note):''}`;
   if(p.kind==='shop')return `<span class="k">🛒 Худалдан авах</span> — ${p.list.map(esc).join(', ')||'…'}`;
   if(p.kind==='tx')return `<span class="k">${p.type==='in'?'💵 Орлого':'💸 Зарлага'}</span> · <b>${money(p.amount)}</b> · ${catIcon(p.cat)} ${esc(p.cat)}${p.note?' — '+esc(p.note):''}${p.date!==today()?' · '+dayLabel(p.date):''}`;
@@ -1285,6 +1413,7 @@ function quickSave(){
   const p=parseQuick($('#qIn').value);if(!p)return;
   if(p.kind==='note'){if(!p.body)return;D.notes.push({id:uid(),title:p.title,body:p.body,tags:p.tags,pinned:false,updated:Date.now()})}
   else if(p.kind==='shop'){p.list.forEach(x=>D.shopping.push({id:uid(),text:x,done:false}))}
+  else if(p.kind==='exam'){if(p.ct==null&&p.ce==null){closeSheet();UI.exDay=p.date;return setView('exam')}const x=examGet(p.date)||{};examSet(p.date,p.ct??x.ct??0,p.ce??x.ce??0)}
   else if(p.kind==='ot'){if(!p.hours){closeSheet();return otForm(null,p)}(D.ot=D.ot||[]).push({id:uid(),date:p.date,start:p.start,end:p.end,hours:p.hours,note:p.note,created:Date.now()})}
   else if(p.kind==='tx'){D.tx.push({id:uid(),type:p.type,amount:p.amount,cat:p.cat,note:p.note,date:p.date,created:Date.now()})}
   else{if(p.appt&&!p.date){closeSheet();return apptForm(null,p)}
@@ -1297,6 +1426,7 @@ function quickEdit(){
   if(!p)return itemForm(null,{});
   if(p.kind==='note')return noteForm(null,{title:p.title,body:p.body,tags:p.tags});
   if(p.kind==='shop'){UI.life='home';closeSheet();return setView('life')}
+  if(p.kind==='exam'){closeSheet();UI.exDay=p.date;return setView('exam')}
   if(p.kind==='ot')return otForm(null,{date:p.date,start:p.start,end:p.end,hours:p.hours,note:p.note});
   if(p.kind==='tx')return txForm(null,p.type,{amount:p.amount,cat:p.cat,note:p.note,date:p.date});
   if(p.appt)return apptForm(null,{appt:p.appt,title:p.title,date:p.date,time:p.time,remind:p.remind,remind2:p.remind2});
@@ -1394,6 +1524,8 @@ function checkReminders(){
     const bills=billsDue(1).length;
     if(tasks||bills)fire('morning'+t,'☀️ Өнөөдөр',[tasks?tasks+' ажил':'',bills?bills+' төлбөр ойртсон':''].filter(Boolean).join(', '));
   }
+  // CT шинжилгээний тоо бичих сануулга
+  const er=D.settings.examRemind;if(D.settings.examName&&er&&mins>=toMin(er)&&mins<toMin(er)+240&&!examGet(t))fire('ex'+t,'🩻 CT шинжилгээ','Өнөөдрийн тодосгогчтой / тодосгогчгүй тоогоо бичих үү?');
   // Сарын сүүлийн өдөр: илүү цагийн нэгтгэл
   if(addDays(t,1).slice(8)==='01'&&mins>=18*60&&mins<23*60){const s=otMonth(ym(t));if(s.L.length)fire('otm'+ym(t),'⏱ Энэ сарын илүү цаг',fmtH(s.tot)+' цаг · '+s.days+' өдөр'+(D.settings.otRate?' · '+money(s.tot*D.settings.otRate):''))}
   if(mins>=21*60&&mins<23*60&&!(D.journal[t]&&D.journal[t].mood))fire('j'+t,'✍️ Оройн 2 минут','Өнөөдөр ямар байв?');
@@ -1407,8 +1539,8 @@ const FB_CFG={apiKey:"AIzaSyDPa2MvJTEPPdFqcfrxJ9HDyyqJMEuShr0",authDomain:"epily
   storageBucket:"epilyse--2026.firebasestorage.app",messagingSenderId:"1002632017161",appId:"1:1002632017161:web:bf5b3aaac4835d63e68fd8"};
 const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
-const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot'];
-const META_SET=['name','avatar','waterGoal','otRate','shiftLink'];
+const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot','exams'];
+const META_SET=['name','avatar','waterGoal','otRate','shiftLink','examUrl','examKey','examName','examRemind','examLink'];
 const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -1601,7 +1733,7 @@ async function logout(){
   try{await fb.terminate(fbDb);await fb.clearIndexedDbPersistence(fbDb)}catch(e){}
   location.reload();
 }
-window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
+window.addEventListener('online',()=>{if(fbReconciled)cloudPush();examPush()});
 
 /* ===================== Эхлүүлэх ===================== */
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.v==='life')UI.life='health';if(b.dataset.v==='plan')UI.planCat='all';setView(b.dataset.v)});
@@ -1610,7 +1742,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeD
 let _lastDay=today();
 setInterval(()=>{checkReminders();if(today()!==_lastDay){_lastDay=today();if($('#sheet').classList.contains('hidden'))render()}},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();if($('#sheet').classList.contains('hidden'))render()}});
-render();checkReminders();setTimeout(gcImages,3000);cloudInit();
+render();checkReminders();setTimeout(gcImages,3000);cloudInit();setTimeout(examPush,4000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
