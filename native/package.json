@@ -1,0 +1,24 @@
+{
+  "name": "minii-udur-native",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "copy-web": "node copy-web.js",
+    "sync": "node copy-web.js && npx cap sync android",
+    "build:apk": "node copy-web.js && npx cap sync android && cd android && gradlew.bat assembleRelease",
+    "build:aab": "node copy-web.js && npx cap sync android && cd android && gradlew.bat bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor-firebase/authentication": "^8.6.0",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.2"
+  }
+}

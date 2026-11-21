@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Миний өдөр</string>
+    <string name="title_activity_main">Миний өдөр</string>
+    <string name="package_name">io.github.zegiijagii11alt.miniiudur</string>
+    <string name="custom_url_scheme">io.github.zegiijagii11alt.miniiudur</string>
+</resources>

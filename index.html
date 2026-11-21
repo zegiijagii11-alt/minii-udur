@@ -303,7 +303,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.6.2';
+const VERSION='1.7.0';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],contrastRooms:['CT','MRI'],reportRemind:'20:00'},notified:{}};
@@ -701,7 +701,7 @@ function otSummary(mo){
 }
 async function otShare(mo){
   const text=otSummary(mo);
-  try{if(navigator.share){await navigator.share({title:'Илүү цаг',text});return}}catch(e){if(e.name==='AbortError')return}
+  try{if(window.NativeApp&&NativeApp.isNative){await NativeApp.shareText(text,'Миний өдөр');return}if(navigator.share){await navigator.share({title:'Илүү цаг',text});return}}catch(e){if(e.name==='AbortError')return}
   try{await navigator.clipboard.writeText(text);toast('Нэгтгэлийг хуулсан — чат, имэйлд буулгаарай')}
   catch(e){openSheet(`<h3>Нэгтгэл</h3><textarea rows="12" readonly>${esc(text)}</textarea><div class="row-btns"><span class="sp"></span><button class="btn primary" onclick="closeSheet()">Хаах</button></div>`)}
 }
@@ -779,7 +779,7 @@ function repSummary(mo){
 }
 async function repShare(mo){
   const text=repSummary(mo);
-  try{if(navigator.share){await navigator.share({title:'Тайлан',text});return}}catch(e){if(e.name==='AbortError')return}
+  try{if(window.NativeApp&&NativeApp.isNative){await NativeApp.shareText(text,'Миний өдөр');return}if(navigator.share){await navigator.share({title:'Тайлан',text});return}}catch(e){if(e.name==='AbortError')return}
   try{await navigator.clipboard.writeText(text);toast('Нэгтгэлийг хуулсан')}
   catch(e){openSheet(`<h3>Нэгтгэл</h3><textarea rows="12" readonly>${esc(text)}</textarea><div class="row-btns"><span class="sp"></span><button class="btn primary" onclick="closeSheet()">Хаах</button></div>`)}
 }
@@ -1450,7 +1450,7 @@ function openSearch(){
 
 /* ===================== Тохиргоо, нөөц ===================== */
 function openSettings(){
-  const s=D.settings;const perm=('Notification' in window)?Notification.permission:'unsupported';
+  const s=D.settings;const NAT=window.NativeApp&&NativeApp.isNative;const perm=NAT?(s.notify?'granted':'default'):('Notification' in window)?Notification.permission:'unsupported';
   openSheet(`<h3>⚙️ Тохиргоо</h3>
     <div class="fld"><label>Таны нэр</label><input id="sName" value="${esc(s.name)}" placeholder="Мэндчилгээнд гарна"></div>
     <div class="fld2"><div class="fld"><label>Өнгө</label><select id="sTheme"><option value="auto">Автомат</option><option value="light">Цайвар</option><option value="dark">Бараан</option></select></div>
@@ -1458,7 +1458,7 @@ function openSettings(){
     <div class="fld"><label>Өдрийн усны зорилго (аяга)</label><input id="sWater" type="number" value="${s.waterGoal||8}"></div>
     <div class="fld"><label>Ээлжийн хуваарийн холбоос</label><input id="sShift" value="${esc(s.shiftLink||'')}" placeholder="${esc(SHEET_LINK)}"></div>
     <div class="fld"><label>RT exam CT хүснэгтийн холбоос</label><input id="sRt" value="${esc(s.rtLink||'')}" placeholder="${esc(RT_LINK)}"></div>
-    <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.':perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
+    <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?(NAT?'Асаалттай. Апп хаалттай, утас түгжээтэй үед ч цагтаа ирнэ.':'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.'):perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
       <div class="btns" style="margin-top:8px"><button class="btn sm" onclick="enableNotify()">${s.notify?'Дахин шалгах':'Асаах'}</button>${s.notify?'<button class="btn sm ghost" onclick="D.settings.notify=false;save();openSettings()">Унтраах</button>':''}</div></div>
     <div class="card"><h2>Бүртгэл</h2><div class="small">${fbUser?'<b style="color:var(--ok)">✓ Нэвтэрсэн</b> · '+esc(fbUser.email||fbUser.displayName||''):'Нэвтрээгүй'}<br>${syncLabel()}</div>
       <div class="btns" style="margin-top:8px">${fbUser?'<button class="btn sm" onclick="cloudPush();toast(\'Синк хийлээ\')">Одоо синк хийх</button><button class="btn sm danger ghost" onclick="logout()">Гарах</button>':'<button class="btn sm primary" onclick="closeSheet();showAuth(true,\'\')">Нэвтрэх</button>'}</div></div>
@@ -1471,6 +1471,7 @@ function openSettings(){
   $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';s.rtLink=/^https?:\/\//.test($('#sRt').value.trim())?$('#sRt').value.trim():'';save();closeSheet();render()};
 }
 async function enableNotify(){
+  if(window.NativeApp&&NativeApp.isNative){const g=await NativeApp.requestPermission();D.settings.notify=g;save();if(g)toast('✓ Сануулга асаалттай — апп хаалттай үед ч ирнэ');openSettings();return}
   if(!('Notification' in window)){toast('Энэ хөтөч сануулга дэмжихгүй');return}
   const p=await Notification.requestPermission();D.settings.notify=p==='granted';save();
   if(p==='granted')notify('Миний өдөр','Сануулга ажиллаж байна ✓');else toast('Зөвшөөрөл өгөөгүй');
@@ -1484,6 +1485,7 @@ async function backupText(){
 async function exportBackup(){
   const name='minii-udur-'+today()+'.txt';const txt=await backupText();
   D.settings.lastBackup=today();save();
+  if(window.NativeApp&&NativeApp.isNative){await NativeApp.shareFile(name,txt,'text/plain','Миний өдөр — нөөц');return}
   try{const f=new File([txt],name,{type:'text/plain'});
     if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Миний өдөр — нөөц'});return}}catch(e){if(e.name==='AbortError')return}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Татаж авлаа: '+name);
@@ -1502,6 +1504,7 @@ function wipeAll(){if(!confirm('Бүх мэдээллийг устгах уу? �
 /* ===================== Сануулга ===================== */
 function notify(title,body){
   toast('🔔 '+title+(body?' — '+body:''));
+  if(window.NativeApp&&NativeApp.isNative)return; // Android апп: системийн сануулга урьдчилан тавигдсан
   if(!D.settings.notify||!('Notification' in window)||Notification.permission!=='granted')return;
   const opt={body,icon:'icon-192.png',badge:'icon-192.png',tag:title+body};
   if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.ready.then(r=>r.showNotification(title,opt)).catch(()=>{try{new Notification(title,opt)}catch(e){}});
@@ -1739,6 +1742,113 @@ async function logout(){
 }
 window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
 
+/* ===================== Android апп (Capacitor): апп хаалттай үед ч сануулах ===================== */
+// Вэб дээр энэ хэсэг юу ч хийхгүй. APK дотор сануулгыг Android-ын системд 14 хоногоор урьдчилж тавина.
+(function(){
+  const C=window.Capacitor;const isNative=!!(C&&C.isNativePlatform&&C.isNativePlatform());
+  window.NativeApp={isNative,resync(){}};
+  if(!isNative)return;
+  document.documentElement.classList.add('is-native');
+  const plug=n=>C.registerPlugin?C.registerPlugin(n):C.Plugins[n];
+  const LN=plug('LocalNotifications'),Share=plug('Share'),FS=plug('Filesystem'),App=plug('App'),FA=plug('FirebaseAuthentication');
+  const CH='reminders',MED='MED_ACTIONS',DAYS=14,MAX=420,SNOOZE_BASE=900000,SNOOZE_MIN=15;
+  let ready=false,timer=null,running=false,again=false;
+  const dt=(day,hm)=>{const [y,m,d]=day.split('-').map(Number);const [h,mi]=hm.split(':').map(Number);return new Date(y,m-1,d,h,mi).getTime()};
+  async function granted(){try{return (await LN.checkPermissions()).display==='granted'}catch(e){return false}}
+  function resync(){clearTimeout(timer);timer=setTimeout(run,800)}
+  async function run(){if(!ready)return;if(running){again=true;return}running=true;try{await schedule()}catch(e){console.warn('reminder sync',e)}running=false;if(again){again=false;resync()}}
+  // Бүх сануулгын жагсаалтыг одоогийн мэдээллээс бүтээнэ
+  function build(){
+    const nowMs=Date.now()+5000,t=today(),L=[];const add=(at,title,body,extra,med)=>{if(at>nowMs)L.push({at,title,body,extra,med})};
+    for(let k=0;k<DAYS;k++){
+      const day=addDays(t,k);
+      // Уулзалт, ажил, эмчийн цаг
+      D.items.forEach(i=>{if(!i.time||!occurs(i,day)||isDone(i,day))return;const start=dt(day,i.time);
+        const title=(i.appt?(APPT[i.appt]||APPT.other).i+' ':i.type==='event'?'📅 ':'✅ ')+i.title;
+        const body=dayLabel(day)+' '+i.time+(i.place?' · '+i.place:'')+(i.prep?' · '+i.prep:'');
+        [i.remind,i.remind2].forEach(r=>{if(r===undefined||r===null||r===''||+r<0)return;add(r==='eve'?dt(addDays(day,-1),'20:00'):start-(+r||0)*60000,title,body)})});
+      // Эм: цагт нь + 30 мин дараа дахин
+      const log=D.medLog[day]||{};
+      D.meds.forEach(m=>(m.times||[]).forEach(x=>{const key=m.id+'@'+x;if(log[key])return;const at=dt(day,x);const body=m.name+(m.dose?' — '+m.dose:'')+' ('+x+')';
+        add(at,'💊 Эм уух цаг боллоо',body,{key,date:day},true);add(at+30*60000,'⏰ Эмээ уусан уу?',body,{key,date:day},true)}));
+      // Өглөөний тойм
+      const tasks=D.items.filter(i=>!i.time&&occurs(i,day)&&!isDone(i,day)).length;
+      if(tasks)add(dt(day,'08:00'),'☀️ Өнөөдөр',tasks+' ажил хийх төлөвлөгөөтэй');
+      // Оройн 2 минут
+      if(!(D.journal[day]&&D.journal[day].mood))add(dt(day,'21:00'),'✍️ Оройн 2 минут','Өнөөдөр ямар байв?');
+      // Тайлан
+      const rr=D.settings.reportRemind;if(rr&&repActive()&&!repGet(day))add(dt(day,rr),'📋 Тайлан','Өнөөдөр аль өрөөнд хэдэн хүн оруулснаа бичих үү?');
+      // Сарын сүүлийн өдөр: илүү цаг
+      if(addDays(day,1).slice(8)==='01'){const s=otMonth(ym(day));if(s.L.length)add(dt(day,'18:00'),'⏱ Энэ сарын илүү цаг',fmtH(s.tot)+' цаг · '+s.days+' өдөр')}
+    }
+    // Тогтмол төлбөр (энэ ба ирэх сар)
+    const n=now();[0,1].forEach(off=>{const base=new Date(n.getFullYear(),n.getMonth()+off,1);const mo=base.getFullYear()+'-'+pad(base.getMonth()+1);const last=new Date(base.getFullYear(),base.getMonth()+1,0).getDate();
+      D.bills.forEach(b=>{if((b.paid||[]).includes(mo))return;const day=mo+'-'+pad(Math.min(b.day,last));add(dt(day,'09:00'),'🧾 Төлбөр: '+b.name,money(b.amount)+' — өнөөдөр төлөх')})});
+    return L.sort((a,b)=>a.at-b.at).slice(0,MAX);
+  }
+  async function schedule(){
+    if(!(await granted()))return;
+    const pending=(await LN.getPending()).notifications||[];
+    const cancel=pending.filter(x=>x.id<SNOOZE_BASE).map(x=>({id:x.id}));
+    if(cancel.length)await LN.cancel({notifications:cancel});
+    const list=build().map((x,i)=>({id:1000+i,channelId:CH,title:x.title,body:x.body,schedule:{at:new Date(x.at),allowWhileIdle:true},autoCancel:true,
+      ...(x.med?{actionTypeId:MED,group:'med-'+x.extra.date+x.extra.key,extra:x.extra}:{})}));
+    if(list.length)await LN.schedule({notifications:list});
+  }
+  async function onAction(ev){
+    const n=ev.notification||{},ex=n.extra||{};
+    try{
+      if(ev.actionId==='taken'&&ex.key){D.medLog[ex.date]=D.medLog[ex.date]||{};D.medLog[ex.date][ex.key]=true;save();render();toast('✓ Эм уусан гэж тэмдэглэлээ')}
+      else if(ev.actionId==='snooze'){await LN.schedule({notifications:[{id:SNOOZE_BASE+(Math.floor(Date.now()/1000)%90000),channelId:CH,title:'⏰ Эмээ уусан уу?',body:n.body||'',
+        schedule:{at:new Date(Date.now()+SNOOZE_MIN*60000),allowWhileIdle:true},actionTypeId:MED,extra:ex,autoCancel:true}]});toast(SNOOZE_MIN+' минутын дараа дахин сануулна');try{App.minimizeApp()}catch(e){}}
+      else if(ex.key){UI.life='health';setView('life')}
+    }catch(e){console.warn(e)}
+    resync();
+  }
+  function onBack(){
+    if(!$('#lightbox').classList.contains('hidden'))return $('#lightbox').classList.add('hidden');
+    if(!$('#sheet').classList.contains('hidden'))return closeSheet();
+    if(!$('#drawer').classList.contains('hidden'))return closeDrawer();
+    if(UI.back)return goBack();
+    if(VIEW==='grp'||VIEW!=='home')return setView('home');
+    App.minimizeApp();
+  }
+  async function shareFile(name,text,mime,title){
+    try{const r=await FS.writeFile({path:name,data:text,directory:'CACHE',encoding:'utf8'});await Share.share({title,dialogTitle:title,files:[r.uri]});return true}catch(e){return false}
+  }
+  async function shareText(text,title){try{await Share.share({title,text,dialogTitle:title});return true}catch(e){return false}}
+  async function requestPermission(){
+    let p;try{p=await LN.requestPermissions()}catch(e){p={display:'denied'}}
+    if(p.display!=='granted')toast('Тохиргоо → Апп → Миний өдөр → Мэдэгдэл хэсгээс асаана уу');
+    try{const ex=(await LN.checkExactNotificationSetting()).exact_alarm;if(ex!=='granted'&&confirm('Сануулга яг цагтаа ирэхийн тулд "Сэрүүлэг ба сануулга" зөвшөөрлийг асаах уу?'))await LN.changeExactNotificationSetting()}catch(e){}
+    resync();return p.display==='granted';
+  }
+  async function setup(){
+    try{await LN.createChannel({id:CH,name:'Сануулга',description:'Эм, уулзалт, эмчийн цаг, төлбөрийн сануулга',importance:5,visibility:1,vibration:true,lights:true,lightColor:'#5b8c7b'})}catch(e){}
+    try{await LN.registerActionTypes({types:[{id:MED,actions:[{id:'taken',title:'Уусан ✓'},{id:'snooze',title:SNOOZE_MIN+' мин дараа'}]}]})}catch(e){}
+    LN.addListener('localNotificationActionPerformed',onAction);
+    App.addListener('backButton',onBack);
+    App.addListener('resume',()=>{try{checkReminders();render()}catch(e){}resync()});
+    // Гадны холбоос (Google Sheet г.м.) системийн хөтөч/апп-аар нээгдэнэ
+    window.open=url=>{if(url)location.href=url;return null};
+    ready=true;
+    try{const p=await LN.checkPermissions();if(p.display==='granted'){if(!D.settings.notify){D.settings.notify=true;saveLocal()}}else if(p.display!=='denied'){if(await requestPermission()){D.settings.notify=true;saveLocal()}}}catch(e){}
+    resync();
+  }
+  // Мэдээлэл өөрчлөгдөх бүрт (энэ төхөөрөмж эсвэл үүлнээс ирсэн) сануулгыг шинэчилнэ
+  const _saveLocal=saveLocal;saveLocal=function(){_saveLocal();resync()};
+  // Апп доторх Google нэвтрэлт (popup вэб дээр л ажилладаг)
+  fbGoogle=async function(){
+    if(!fbOK)return location.reload();
+    try{const r=await FA.signInWithGoogle();const tok=r&&r.credential&&r.credential.idToken;if(!tok){showAuth(true,'Google нэвтрэлт амжилтгүй. Дахин оролдоно уу.');return}
+      await fb.signInWithCredential(fbAuth,fb.GoogleAuthProvider.credential(tok))}
+    catch(e){const m=String((e&&(e.message||e.code))||'');if(/cancel/i.test(m))return;showAuth(true,e&&e.code&&String(e.code).startsWith('auth/')?authErr(e):'Google нэвтрэлт амжилтгүй: '+m)}
+  };
+  const _logout=logout;logout=async function(){try{await FA.signOut()}catch(e){}return _logout()};
+  window.NativeApp={isNative:true,resync,shareFile,shareText,requestPermission};
+  window.addEventListener('load',setup);
+})();
+
 /* ===================== Эхлүүлэх ===================== */
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.v==='life')UI.life='health';if(b.dataset.v==='plan')UI.planCat='all';setView(b.dataset.v)});
 try{const v=localStorage.getItem(KEY+'.view');if(v&&['home','today','plan','notes','money','life'].includes(v))VIEW=v}catch(e){}
@@ -1747,7 +1857,7 @@ let _lastDay=today();
 setInterval(()=>{checkReminders();if(today()!==_lastDay){_lastDay=today();if($('#sheet').classList.contains('hidden'))render()}},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();if($('#sheet').classList.contains('hidden'))render()}});
 render();checkReminders();setTimeout(gcImages,3000);cloudInit();
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!(window.NativeApp&&NativeApp.isNative))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>

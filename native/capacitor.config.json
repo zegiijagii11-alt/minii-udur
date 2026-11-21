@@ -1,0 +1,18 @@
+{
+  "appId": "io.github.zegiijagii11alt.miniiudur",
+  "appName": "Миний өдөр",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#f6f4ef"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_day",
+      "iconColor": "#5b8c7b"
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    }
+  }
+}
