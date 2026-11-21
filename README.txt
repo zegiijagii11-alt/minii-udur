@@ -1,4 +1,4 @@
-﻿Миний өдөр — хувийн туслах апп (PWA), v1.1.1
+﻿Миний өдөр — хувийн туслах апп (PWA), v1.6.0
 
 Хаяг: https://zegiijagii11-alt.github.io/minii-udur/
 Файлууд: index.html (бүх код), sw.js (офлайн + Firebase SDK кэш), manifest.webmanifest, icon-*.png
