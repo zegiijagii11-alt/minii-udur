@@ -88,6 +88,7 @@ main{padding:0 16px 72px;max-width:720px;margin:0 auto}
 .rm{flex:1;min-width:0}.rt{display:flex;justify-content:space-between;gap:8px;font-size:.92rem}
 .rm .bar{margin:5px 0 3px;height:6px}
 .rm .meta{color:var(--muted);font-size:.78rem}
+.spark{display:block;width:100%;height:26px;margin:2px 0}
 /* Тоон товчлуур */
 .kp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .kp-top input{width:auto;padding:6px 10px}
@@ -278,7 +279,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.3.0';
+const VERSION='1.4.0';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   ot:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:''},notified:{}};
@@ -947,6 +948,7 @@ function vLife(){
     const t=today();const ap=D.items.filter(i=>i.appt);
     const up=ap.filter(i=>!i.done&&i.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
     const pastA=ap.filter(i=>i.done||i.date<t).sort((a,b)=>b.date.localeCompare(a.date));
+    if(!UI.sec)out+=healthRing();
     if(S('appt')){
     out+=`<div class="card"><h2>Эмчийн цаг, шинжилгээ<span class="sp"></span><button class="lnk" onclick="apptForm(null)">+ нэмэх</button></h2>`;
     out+=up.length?up.map(i=>{const d=diffDays(t,i.date);const R=x=>x==null||x===''?'':x==='eve'?'өмнөх орой':x>=1440?'1 өдөр өмнө':x>=60?(x/60)+' цаг өмнө':x>0?x+' мин өмнө':'цагт нь';
@@ -958,13 +960,14 @@ function vLife(){
       :`<div class="empty">Эмчид үзүүлэх, шинжилгээ өгөх, эмнэлэгт очих цагаа нэмбэл өмнөх өдөр болон цаг болохоос өмнө сануулна. Хурдан нэмэхэд “12/05 10-д дотрын эмчид үзүүлэх” гэж бичиж болно.</div>`;
     if(pastA.length)out+=`<details><summary>Өмнөх үзлэгүүд (${pastA.length})</summary>${pastA.slice(0,30).map(i=>`<div class="row" style="cursor:pointer" onclick="apptForm('${i.id}')"><span>${(APPT[i.appt]||APPT.other).i}</span><div class="main"><div class="ttl">${esc(i.title)}</div><div class="meta">${dayLabel(i.date)}${i.place?' · '+esc(i.place):''}</div>${i.result?`<div class="meta">📄 ${esc(i.result.slice(0,80))}</div>`:'<div class="meta">+ үр дүн бичих</div>'}</div></div>`).join('')}</details>`;
     out+=`</div>`;}
-    if(S('meds')){
+    if(!UI.sec)out+=healthReport();
+    if(UI.sec==='meds'){
     out+=`<div class="card"><h2>Эм<span class="sp"></span><button class="lnk" onclick="medForm(null)">+ нэмэх</button></h2>`;
     out+=D.meds.length?D.meds.map(m=>`<div class="row"><div class="main" onclick="medForm('${m.id}')"><div class="ttl">${esc(m.name)}${m.dose?` <span class="small">${esc(m.dose)}</span>`:''}</div><div class="meta">⏰ ${(m.times||[]).join(', ')||'цаггүй'} · ${medStreak(m)} өдөр бүрэн</div></div></div>`).join('')
       :`<div class="empty">Тогтмол уудаг эмээ нэмбэл цагт нь сануулж, өнөөдрийн хуудсанд гарна.</div>`;
     out+=`</div>`;}
-    if(S('water'))out+=waterCard();
-    if(S('meas')){
+    if(UI.sec==='water')out+=waterCard();
+    if(UI.sec==='meas'){
     out+=`<div class="card"><h2>Хэмжилт<span class="sp"></span><button class="lnk" onclick="measForm(null)">+ нэмэх</button></h2><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">`;
     out+=Object.entries(MEAS).map(([k,v])=>{const last=D.health.filter(h=>h.type===k).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)[0];
       return `<button class="stat" style="border:0;text-align:left" onclick="measForm(null,'${k}')"><small>${v.i} ${v.l}</small><b>${last?measVal(last):'—'}</b>${last?`<small>${dayLabel(last.date)}</small>`:'<small>+ нэмэх</small>'}</button>`}).join('');
@@ -995,6 +998,71 @@ function waterCard(){
   return `<div class="card"><h2>Ус<span class="sp"></span><span class="tag ${n>=g?'ok':''}">${n}/${g} аяга</span></h2><div class="water">${[...Array(g)].map((_,k)=>`<button class="${k<n?'on':''}" onclick="setWater(${k<n&&k===n-1?k:k+1})" aria-label="${k+1} аяга">🥛</button>`).join('')}</div></div>`;
 }
 function setWater(n){D.water[today()]=n;save();render()}
+/* ---------- Эрүүл мэндийн тойрог ---------- */
+const H_SVG={
+  doctor:'<path d="M6 3.5v5a4 4 0 0 0 8 0v-5"/><path d="M10 12.5v2.5a5 5 0 0 0 10 0v-2"/><circle class="f" cx="20" cy="11" r="2"/>',
+  lab:'<path class="f" d="M10 3.5v13.5a2 2 0 0 0 4 0V3.5z"/><path d="M8.5 3.5h7M10 11h4"/>',
+  meds:'<rect class="f" x="2.8" y="8.8" width="18.4" height="6.4" rx="3.2" transform="rotate(-40 12 12)"/><path d="M9.6 9.2l4.8 5.6"/>',
+  water:'<path class="f" d="M6 4h12l-1.6 15.2a1.5 1.5 0 0 1-1.5 1.3H9.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M6.6 9.5h10.8"/>',
+  weight:'<rect class="f" x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 9.5a5 5 0 0 1 7 0L12 12.5z"/>',
+  bp:'<circle class="f" cx="12" cy="13" r="7.5"/><path d="M12 13l3-3M8 9.6l.7.7M16 9.6l-.7.7M12 6.5v1"/>',
+  sugar:'<path class="f" d="M12 3.5s6 6.4 6 10.9a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5z"/><path d="M9.5 14.5A2.5 2.5 0 0 0 12 17"/>',
+  sleep:'<path class="f" d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
+  pulse:'<path class="f" d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M8 11.5h2l1-2 2 4 1-2h2"/>',
+  steps:'<path class="f" d="M7 4c2 0 3 2 3 4.5S9 13 7.5 13 5 11 5 8.5 5 4 7 4z"/><path class="f" d="M16.5 9c2 0 2.5 2.5 2.5 4.5S18 18 16.5 18 14 16 14 13.5 14.5 9 16.5 9z"/><path d="M6 15.5h3M15 20.5h3"/>',
+  dental:'<path class="f" d="M7.5 4c1.5 0 2.5.8 4.5.8S15 4 16.5 4C19 4 20 6 20 8.5c0 3-1.5 4.5-2 7.5-.4 2.5-1 4.5-2.2 4.5-1.6 0-1.6-5-3.8-5s-2.2 5-3.8 5C7 20.5 6.4 18.5 6 16c-.5-3-2-4.5-2-7.5C4 6 5 4 7.5 4z"/>',
+  vaccine:'<path d="M18 3l3 3M19.5 4.5l-3 3"/><path class="f" d="M16.5 7.5l-9 9-2-2 9-9z"/><path d="M5.5 14.5l-2 2M7.5 16.5 4 20M10 9l1.5 1.5M12.5 6.5 14 8"/>',
+  hospital:'<path class="f" d="M4 20.5V8l8-4.5L20 8v12.5z"/><path d="M12 9v6M9 12h6M3 20.5h18"/>',
+  other:'<rect class="f" x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 4.5v-1h6v1M8.5 10h7M8.5 14h5"/>'};
+const H_COLOR={doctor:'#6f9fd2',lab:'#9a80c6',meds:'#c96b6b',water:'#5f9db3',weight:'#6aa892',bp:'#c97a92',sugar:'#cf9a3a',
+  sleep:'#7d86c4',pulse:'#d0706a',steps:'#7fa88f',dental:'#5f9db3',vaccine:'#b39484',hospital:'#6f8fb3',other:'#8d928d'};
+function lastMeas(k){return D.health.filter(h=>h.type===k).sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0))}
+function nextAppt(k){const t=today();const i=D.items.filter(x=>x.appt===k&&!x.done&&x.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))[0];return i?dayLabel(i.date).replace(/ .*/,''):''}
+function medToday(){const t=today(),log=D.medLog[t]||{};let tot=0,tk=0;D.meds.forEach(m=>(m.times||[]).forEach(x=>{tot++;if(log[m.id+'@'+x])tk++}));return {tot,tk}}
+function healthRing(){
+  const t=today();const md=medToday();const w=D.water[t]||0,g=D.settings.waterGoal||8;
+  const mv=k=>{const h=lastMeas(k)[0];return h?(k==='bp'?h.value+'/'+(h.value2||'?'):fmtH(h.value)+(k==='weight'?'кг':k==='sleep'?'ц':'')):''};
+  const I=[
+    ['doctor','Эмчид үзүүлэх',"apptForm(null,{appt:'doctor'})",nextAppt('doctor')],['lab','Шинжилгээ',"apptForm(null,{appt:'lab',remind:'eve'})",nextAppt('lab')],
+    ['meds','Эм','medsSheet()',md.tot?md.tk+'/'+md.tot:''],['water','Ус +1','addWater()',w+'/'+g],
+    ['weight','Жин',"measForm(null,'weight')",mv('weight')],['bp','Даралт',"measForm(null,'bp')",mv('bp')],['sugar','Сахар',"measForm(null,'sugar')",mv('sugar')],
+    ['sleep','Нойр',"measForm(null,'sleep')",mv('sleep')],['pulse','Зүрх',"measForm(null,'pulse')",mv('pulse')],['steps','Алхалт',"measForm(null,'steps')",mv('steps')],
+    ['dental','Шүдний эмч',"apptForm(null,{appt:'dental'})",nextAppt('dental')],['vaccine','Вакцин',"apptForm(null,{appt:'vaccine'})",nextAppt('vaccine')],
+    ['hospital','Эмнэлэг',"apptForm(null,{appt:'hospital'})",nextAppt('hospital')],['other','Бусад цаг',"apptForm(null,{appt:'other'})",nextAppt('other')]];
+  const pos=[[1,1],[1,2],[1,3],[1,4],[2,1],[3,1],[4,1],[2,4],[3,4],[4,4],[5,1],[5,2],[5,3],[5,4]];
+  const arc=(r,frac,col,sw)=>{const C=2*Math.PI*r,len=C*Math.min(1,frac);return `<circle r="${r}" cx="50" cy="50" fill="none" stroke="var(--line)" stroke-width="${sw}"/>`+(len>0?`<circle r="${r}" cx="50" cy="50" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}"/>`:'')};
+  return `<div class="mnav"><span></span><b>${longDate(t).replace(/^\d+ оны /,'')}</b><span></span></div>
+    <div class="mring">${I.map(([k,l,fn,sub],i)=>`<button class="mcat" style="grid-row:${pos[i][0]};grid-column:${pos[i][1]};color:${H_COLOR[k]}" onclick="${fn}"><svg viewBox="0 0 24 24">${H_SVG[k]}</svg><small>${l}</small>${sub?`<b>${esc(sub)}</b>`:''}</button>`).join('')}
+    <div class="mdonut"><svg viewBox="0 0 100 100"><g transform="rotate(-90 50 50)">${arc(40,md.tot?md.tk/md.tot:0,H_COLOR.meds,10)}${arc(27,w/g,H_COLOR.water,10)}</g></svg>
+      <div class="mc"><span style="color:${H_COLOR.meds};font-weight:700">Эм ${md.tot?md.tk+'/'+md.tot:'—'}</span><span style="color:${H_COLOR.water};font-weight:700">Ус ${w}/${g}</span></div></div></div>`;
+}
+function addWater(){const t=today();D.water[t]=(D.water[t]||0)+1;save();render();const g=D.settings.waterGoal||8;toast('💧 '+D.water[t]+'/'+g+' аяга'+(D.water[t]===g?' — зорилгоо биелүүллээ!':''))}
+function medsSheet(){
+  const t=today(),log=D.medLog[t]||{};const doses=[];D.meds.forEach(m=>(m.times||[]).forEach(x=>doses.push({m,x})));doses.sort((a,b)=>a.x.localeCompare(b.x));
+  openSheet(`<h3>Өнөөдрийн эм</h3>${doses.length?doses.map(({m,x})=>{const k=m.id+'@'+x;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}');medsSheet()"><span class="tm">${x}</span><div class="main"><div class="ttl">${esc(m.name)}</div>${m.dose?`<div class="meta">${esc(m.dose)}</div>`:''}</div></div>`}).join(''):'<div class="empty">Эм нэмээгүй байна.</div>'}
+    <div class="row-btns"><button class="btn sm ghost" onclick="closeSheet();UI.sec='meds';UI.back='health';UI.subTitle='Эм';render()">Эмийн жагсаалт</button><span class="sp"></span><button class="btn sm primary" onclick="medForm(null)">+ Эм нэмэх</button></div>`);
+}
+function spark(vals,col){
+  if(vals.length<2)return '';const mn=Math.min(...vals),mx=Math.max(...vals),rg=mx-mn||1;
+  const pts=vals.map((v,i)=>`${(i*100/(vals.length-1)).toFixed(1)},${(26-(v-mn)*22/rg).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="-2 0 104 30" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function healthReport(){
+  const t=today();const days=[...Array(7)].map((_,k)=>addDays(t,-k));
+  const first=Object.keys(D.medLog).filter(d=>Object.keys(D.medLog[d]||{}).length).sort()[0]||t; // бүртгэж эхэлсэн өдрөөс
+  let sch=0,tk=0;days.filter(d=>d>=first).forEach(d=>{const log=D.medLog[d]||{};D.meds.forEach(m=>(m.times||[]).forEach(x=>{sch++;if(log[m.id+'@'+x])tk++}))});
+  const wAvg=days.reduce((a,d)=>a+(D.water[d]||0),0)/7;
+  const rows=Object.keys(MEAS).map(k=>{const L=lastMeas(k);if(!L.length)return '';const last=L[0],prev=L[1];
+    const unit=MEAS[k].u;let ch='';if(prev){const dv=Math.round(((+last.value)-(+prev.value))*10)/10;ch=dv===0?'өөрчлөлтгүй':(dv>0?'▲ ':'▼ ')+Math.abs(dv)+(k==='bp'?'':' '+unit)}
+    const vals=L.slice(0,10).reverse().map(h=>+h.value);
+    return `<div class="rrow" style="cursor:pointer" onclick="measForm(null,'${k}')"><span class="ri" style="color:${H_COLOR[k]}"><svg viewBox="0 0 24 24" class="cico">${H_SVG[k]}</svg></span>
+      <div class="rm"><div class="rt"><span>${MEAS[k].l}</span><span class="amt">${measVal(last)}</span></div>${spark(vals,H_COLOR[k])}<div class="meta">${dayLabel(last.date)}${ch?' · '+ch:''}${L.length>1?' · '+L.length+' хэмжилт':''}</div></div></div>`}).join('');
+  return `<div class="card"><h2>Эрүүл мэндийн тайлан</h2>
+    <div class="stats" style="margin-bottom:8px"><div class="stat"><small>Эм (7 хоног)</small><b>${sch?Math.round(100*tk/sch)+'%':'—'}</b></div>
+    <div class="stat"><small>Ус (дундаж)</small><b>${fmtH(wAvg)} аяга</b></div><div class="stat"><small>Ирэх үзлэг</small><b>${(()=>{const i=D.items.filter(x=>x.appt&&!x.done&&x.date>=t).sort((a,b)=>a.date.localeCompare(b.date))[0];return i?dayLabel(i.date).replace(/ .*/,''):'—'})()}</b></div></div>
+    ${rows||'<div class="empty">Дээрх дүрс дээр дарж жин, даралт, сахар зэргээ бичвэл энд өөрчлөлт, график нь гарна.</div>'}
+    ${D.health.length?`<div class="row-btns"><span class="sp"></span><button class="lnk" onclick="UI.sec='meas';UI.back='health';UI.subTitle='Хэмжилт';render()">Бүх хэмжилт →</button></div>`:''}</div>`;
+}
 const measVal=h=>h.type==='bp'?`${h.value}/${h.value2||'?'}`:`${h.value} ${MEAS[h.type].u}`;
 function toggleMed(k){const t=today();D.medLog[t]=D.medLog[t]||{};D.medLog[t][k]=!D.medLog[t][k];if(!D.medLog[t][k])delete D.medLog[t][k];save();render()}
 function medStreak(m){let n=0,d=today();const full=day=>(m.times||[]).every(tm=>(D.medLog[day]||{})[m.id+'@'+tm]);if(!full(d))d=addDays(d,-1);while(full(d)&&n<999){n++;d=addDays(d,-1)}return n}
