@@ -99,6 +99,12 @@ main{padding:0 16px 72px;max-width:720px;margin:0 auto}
 .exb.plus{border-color:var(--pri);color:var(--pri)}.exb.minus{border-color:var(--line);color:var(--muted)}
 .exb:active{transform:scale(.94)}
 .extot{text-align:center;margin:12px 0 4px;font-size:1.05rem}
+.exbox.split{grid-column:1/-1}
+.exsplit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.exsplit>div{background:var(--bg);border-radius:16px;padding:10px 4px 12px}
+.exsplit small{color:var(--muted);font-size:.8rem}
+.exsplit .exnum{font-size:2.8rem;margin:4px 0 8px}
+.exnum.c{color:var(--me)}
 .extab{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.92rem}
 .extab th{color:var(--muted);font-weight:500;font-size:.8rem;text-align:right;padding:4px 6px}.extab th:first-child,.extab td:first-child{text-align:left}
 .extab td{text-align:right;padding:8px 6px;border-top:1px solid var(--line);cursor:pointer}
@@ -297,10 +303,10 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.6.0';
+const VERSION='1.6.1';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
-  ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],reportRemind:'20:00'},notified:{}};
+  ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],contrastRooms:['CT','MRI'],reportRemind:'20:00'},notified:{}};
 const SHEET_LINK='https://docs.google.com/spreadsheets/d/1seWg1MBaKH9GCyZ6A-U-omfMONuJNxLg/edit';
 const shiftLink=()=>D.settings.shiftLink||SHEET_LINK;
 function load(){
@@ -309,6 +315,8 @@ function load(){
   catch(e){return JSON.parse(JSON.stringify(DEF))}
 }
 let D=load();
+(D.reports||[]).forEach(r=>{Object.keys(r.rooms||{}).forEach(k=>{const m=k.match(/^(.+?)\s+тодосгогчтой$/i);if(!m)return;const base=m[1];const v=r.rooms[k];const o=typeof r.rooms[base]==='object'&&r.rooms[base]?r.rooms[base]:{n:+r.rooms[base]||0,c:0};o.c=(o.c||0)+(typeof v==='number'?v:(+v.n||0)+(+v.c||0));r.rooms[base]=o;delete r.rooms[k]})});
+if(D.settings.rooms)D.settings.rooms=D.settings.rooms.filter(k=>!/\sтодосгогчтой$/i.test(k));
 if((D.exams||[]).length){D.reports=D.reports||[];D.exams.forEach(e=>{if(!D.reports.some(r=>r.date===e.date)){const r={};if(e.ct)r['CT']=e.ct;if(e.ce)r['CT тодосгогчтой']=e.ce;D.reports.push({id:e.date,date:e.date,rooms:r,note:''})}});D.exams=[]}
 ['examUrl','examKey','examName','examRemind','examLink'].forEach(k=>delete D.settings[k]);try{localStorage.removeItem(KEY+'.exq')}catch(e){}
 // Хасагдсан ээлжийн хуваарийн үлдэгдлийг цэвэрлэнэ
@@ -364,7 +372,7 @@ function parseQuick(raw){
     return {kind:'note',title:body.split('\n')[0].slice(0,60),body,tags:(body.match(/#[^\s#]+/g)||[]).map(t=>t.slice(1))};
   }
   if(/илүү\s*цаг/i.test(src))return parseOT(src);
-  if(/^\s*тайлан\s*$/i.test(src)||(/(^|\s)тайлан(\s|:|$)/i.test(src)&&/\d/.test(src))||/^(ct|mri|мри|рентген|пэт|pet|эхо|хэт авиа)\s*[:=-]?\s*\d/i.test(src))return parseReport(src);
+  if(/^\s*тайлан\s*$/i.test(src)||(/(^|\s)тайлан(\s|:|$)/i.test(src)&&/\d/.test(src))||/^(ct|mri|мри|рентген|пэт|pet|эхо|хэт авиа)\s*[:=-]?\s*\d/i.test(src)||(/тодосгогч|тодтой|тодгүй/i.test(src)&&/\d/.test(src)))return parseReport(src);
   if(m=src.match(/^(авах|дэлгүүр|худалдаж авах)\s*[:：]\s*([\s\S]*)$/i)){
     return {kind:'shop',list:m[2].split(/[,;\n]/).map(x=>x.trim()).filter(Boolean)};
   }
@@ -437,12 +445,22 @@ function parseOT(src){
   else if(m=s.match(/\s(\d+(?:[.,]\d+)?)\s*(цаг\S*|ц)?(?=\s)/)){hours=parseFloat(m[1].replace(',','.'));s=s.replace(m[0],' ')}
   return {kind:'ot',date,start,end,hours,note:s.replace(/\s+/g,' ').trim()};
 }
-// Тайлан: "тайлан CT 12 MRI 5", "өчигдөр тайлан рентген 20", "CT 8"
+// Тайлан: "тайлан CT 3 ce 6", "CT тодосгогчгүй 3 тодосгогчтой 6", "CT 3/6", "өчигдөр тайлан MRI 4 рентген 20"
+// Буцаах: rooms = {өрөө: {n?: тодосгогчгүй, c?: тодосгогчтой}}
 function parseReport(src){
   let s=' '+src.replace(/(^|\s)тайлан\s*:?/i,' ')+' ';let date=today();
   if(/\sөчигдөр/i.test(s)){date=addDays(date,-1);s=s.replace(/\sөчигдөр\S*/i,' ')}
-  const rooms={};let m;const re=/([A-Za-zА-Яа-яӨөҮүЁё][A-Za-zА-Яа-яӨөҮүЁё\-]*(?:\s+[A-Za-zА-Яа-яӨөҮүЁё][A-Za-zА-Яа-яӨөҮүЁё\-]*)?)\s*[:=-]?\s*(\d+)/g;
-  while((m=re.exec(s)))rooms[m[1].trim()]=+m[2];
+  const rooms={};let room=null,mode='n',lastWasWord=false,assigned=false;
+  for(const tok of s.split(/[\s,;]+/).filter(Boolean)){
+    const t=tok.toLowerCase();
+    if(/^(тодосгогчгүй|тодгүй|гүй)$/.test(t)){mode='n';lastWasWord=false;continue}
+    if(/^(тодосгогчтой|тодтой|тай|ce|се)$/.test(t)){if(!room)room='CT';mode='c';lastWasWord=false;continue}
+    let m=t.match(/^(\d+)(?:[\/+](\d+))?$/);
+    if(m){if(!room)continue;const o=rooms[room]=rooms[room]||{};if(m[2]!=null){o.n=+m[1];o.c=+m[2]}else o[mode]=+m[1];mode='n';lastWasWord=false;assigned=true;continue}
+    if(lastWasWord&&room&&!assigned)room=room+' '+tok;else{room=tok;assigned=false}
+    mode='n';lastWasWord=true;
+  }
+  Object.keys(rooms).forEach(k=>{if(!Object.keys(rooms[k]).length)delete rooms[k]});
   return {kind:'report',date,rooms};
 }
 function mkDate(mo,da){
@@ -685,54 +703,76 @@ async function otShare(mo){
   catch(e){openSheet(`<h3>Нэгтгэл</h3><textarea rows="12" readonly>${esc(text)}</textarea><div class="row-btns"><span class="sp"></span><button class="btn primary" onclick="closeSheet()">Хаах</button></div>`)}
 }
 
-/* ---------- Ажлын тайлан: өрөө бүрт хэдэн хүн оруулсан ---------- */
+/* ---------- Ажлын тайлан: өрөө бүрт хэдэн хүн (тодосгогчгүй / тодосгогчтой) ---------- */
 const rooms=()=>(D.settings.rooms&&D.settings.rooms.length?D.settings.rooms:['CT','MRI','Рентген']);
+const contrastRooms=()=>D.settings.contrastRooms||['CT','MRI'];
+const isSplit=k=>contrastRooms().some(r=>r.toLowerCase()===String(k).toLowerCase());
+// өрөөний утга: тоо (хуваагдаагүй) эсвэл {n: тодосгогчгүй, c: тодосгогчтой}
+const rv=v=>v==null?{n:0,c:0}:typeof v==='number'?{n:v,c:0}:{n:+v.n||0,c:+v.c||0};
+const rsum=v=>{const x=rv(v);return x.n+x.c};
 const repGet=d=>(D.reports||[]).find(x=>x.date===d);
-const repTotal=r=>r?Object.values(r.rooms||{}).reduce((a,b)=>a+(+b||0),0):0;
+const repTotal=r=>r?Object.values(r.rooms||{}).reduce((a,v)=>a+rsum(v),0):0;
 function repSave(d,roomsObj,note){
-  D.reports=D.reports||[];let x=repGet(d);const clean={};Object.entries(roomsObj||{}).forEach(([k,v])=>{v=Math.max(0,Math.round(+v||0));if(v)clean[k]=v});
+  D.reports=D.reports||[];let x=repGet(d);const out={};
+  Object.entries(roomsObj||{}).forEach(([k,v])=>{const o=rv(v);o.n=Math.max(0,Math.round(o.n));o.c=Math.max(0,Math.round(o.c));
+    if(o.n+o.c)out[k]=(isSplit(k)||o.c)?o:o.n});
   const nt=note!==undefined?note:(x&&x.note)||'';
-  if(!Object.keys(clean).length&&!nt){D.reports=D.reports.filter(r=>r.date!==d)}
-  else{if(!x){x={id:d,date:d};D.reports.push(x)}x.rooms=clean;x.note=nt;x.updated=Date.now()}
+  if(!Object.keys(out).length&&!nt){D.reports=D.reports.filter(r=>r.date!==d)}
+  else{if(!x){x={id:d,date:d};D.reports.push(x)}x.rooms=out;x.note=nt;x.updated=Date.now()}
   save();
 }
-function repAdd(d,room,delta){const r=Object.assign({},(repGet(d)||{}).rooms);r[room]=Math.max(0,(r[room]||0)+delta);repSave(d,r);render()}
+function repAdd(d,room,mode,delta){const r=Object.assign({},(repGet(d)||{}).rooms);const o=rv(r[room]);o[mode]=Math.max(0,o[mode]+delta);r[room]=o;repSave(d,r);render()}
 function repActive(){const t=today();return (D.reports||[]).some(r=>r.date>=addDays(t,-14))}
 function reportMissing(){const n=now();return repActive()&&n.getHours()>=17&&!repGet(today())?1:0}
+const q_=k=>esc(k).replace(/'/g,'');
 function reportMini(){
   if(!repActive())return '';const t=today();const r=(repGet(t)||{}).rooms||{};
+  const cell=(k,mode,label)=>`<div class="exm"><span>${label}</span><button onclick="repAdd(today(),'${q_(k)}','${mode}',-1)" aria-label="${esc(label)} хасах">−</button><b>${rv(r[k])[mode]}</b><button onclick="repAdd(today(),'${q_(k)}','${mode}',1)" aria-label="${esc(label)} нэмэх">+</button></div>`;
   return `<div class="card"><h2>Тайлан — өнөөдөр${repTotal(repGet(t))?` <span class="tag">${repTotal(repGet(t))} хүн</span>`:''}<span class="sp"></span><button class="lnk" onclick="UI.repDay=null;setView('report')">Дэлгэрэнгүй →</button></h2>
-    <div class="exmini">${rooms().map(k=>`<div class="exm"><span>${esc(k)}</span><button onclick="repAdd(today(),'${esc(k).replace(/'/g,'')}',-1)" aria-label="${esc(k)} хасах">−</button><b>${r[k]||0}</b><button onclick="repAdd(today(),'${esc(k).replace(/'/g,'')}',1)" aria-label="${esc(k)} нэмэх">+</button></div>`).join('')}</div></div>`;
+    <div class="exmini">${rooms().map(k=>isSplit(k)?cell(k,'n',esc(k)+' тодгүй')+cell(k,'c',esc(k)+' тодтой'):cell(k,'n',esc(k))).join('')}</div></div>`;
 }
 function vReport(){
   const t=today();const d=UI.repDay||t;const rep=repGet(d)||{};const r=rep.rooms||{};
   const mo=ym(d);const [y,m]=mo.split('-').map(Number);
   const L=(D.reports||[]).filter(x=>ym(x.date)===mo).sort((a,b)=>a.date.localeCompare(b.date));
-  const cols=[...new Set([...rooms(),...L.flatMap(x=>Object.keys(x.rooms||{}))])];
-  const tot=k=>L.reduce((a,x)=>a+((x.rooms||{})[k]||0),0);const all=L.reduce((a,x)=>a+repTotal(x),0);
-  const q=k=>esc(k).replace(/'/g,'');
-  let out=`<div class="mnav"><button class="lnk" onclick="UI.repDay='${addDays(d,-1)}';render()">‹ Өмнөх</button><b>${dayLabel(d)}${d===t?' · '+(m)+'/'+parseD(d).getDate():''}</b><button class="lnk" onclick="UI.repDay='${addDays(d,1)}';render()" ${d>=t?'disabled style="opacity:.3"':''}>Дараах ›</button></div>
-    <div class="exgrid">${rooms().map(k=>`<div class="exbox"><div class="exl">${esc(k)}<small>өрөө</small></div><div class="exnum">${r[k]||0}</div>
-      <div class="exbtns"><button class="exb minus" onclick="repAdd('${d}','${q(k)}',-1)" aria-label="хасах">−</button><button class="exb plus" onclick="repAdd('${d}','${q(k)}',1)" aria-label="нэмэх">+</button></div></div>`).join('')}</div>
+  const keys=[...new Set([...rooms(),...L.flatMap(x=>Object.keys(x.rooms||{}))])];
+  // хүснэгтийн багана: хуваалттай өрөө 2 багана
+  const cols=keys.flatMap(k=>isSplit(k)||L.some(x=>rv((x.rooms||{})[k]).c)?[[k,'n','тодгүй'],[k,'c','тодтой']]:[[k,'n','']]);
+  const colTot=([k,mode])=>L.reduce((a,x)=>a+rv((x.rooms||{})[k])[mode],0);const all=L.reduce((a,x)=>a+repTotal(x),0);
+  const btns=(k,mode)=>`<div class="exbtns"><button class="exb minus" onclick="repAdd('${d}','${q_(k)}','${mode}',-1)" aria-label="хасах">−</button><button class="exb plus" onclick="repAdd('${d}','${q_(k)}','${mode}',1)" aria-label="нэмэх">+</button></div>`;
+  const box=k=>{const o=rv(r[k]);
+    if(!isSplit(k))return `<div class="exbox"><div class="exl">${esc(k)}<small>өрөө</small></div><div class="exnum">${o.n}</div>${btns(k,'n')}</div>`;
+    return `<div class="exbox split"><div class="exl">${esc(k)}<small>нийт ${o.n+o.c}</small></div>
+      <div class="exsplit"><div><small>Тодосгогчгүй</small><div class="exnum">${o.n}</div>${btns(k,'n')}</div><div><small>Тодосгогчтой</small><div class="exnum c">${o.c}</div>${btns(k,'c')}</div></div></div>`};
+  let out=`<div class="mnav"><button class="lnk" onclick="UI.repDay='${addDays(d,-1)}';render()">‹ Өмнөх</button><b>${dayLabel(d)}${d===t?' · '+m+'/'+parseD(d).getDate():''}</b><button class="lnk" onclick="UI.repDay='${addDays(d,1)}';render()" ${d>=t?'disabled style="opacity:.3"':''}>Дараах ›</button></div>
+    <div class="exgrid">${rooms().map(box).join('')}</div>
     <div class="extot">Нийт <b>${repTotal(rep)}</b> хүн <button class="lnk" onclick="repEdit('${d}')">✎ Тоогоор засах</button></div>
     <div class="fld" style="margin:6px 0 14px"><input placeholder="Тэмдэглэл (заавал биш): онцлог тохиолдол, ээлж…" value="${esc(rep.note||'')}" onchange="repSave('${d}',(repGet('${d}')||{}).rooms,this.value.trim());toast('Хадгаллаа')"></div>`;
   out+=`<div class="card"><h2>${y} оны ${m} сар<span class="sp"></span><span class="small">нийт ${all} хүн · ${L.length} өдөр</span></h2>
-    ${L.length?`<div style="overflow-x:auto"><table class="extab"><tr><th>Өдөр</th>${cols.map(k=>`<th>${esc(k)}</th>`).join('')}<th>Нийт</th></tr>
-      ${L.slice().reverse().map(x=>`<tr onclick="UI.repDay='${x.date}';render();window.scrollTo(0,0)" class="${x.date===d?'on':''}"><td>${dayLabel(x.date)}${x.note?' 📝':''}</td>${cols.map(k=>`<td>${(x.rooms||{})[k]||''}</td>`).join('')}<td><b>${repTotal(x)}</b></td></tr>`).join('')}
-      <tr class="sum"><td>Нийт</td>${cols.map(k=>`<td>${tot(k)}</td>`).join('')}<td>${all}</td></tr></table></div>`:'<div class="empty">Энэ сард тайлан бичээгүй байна. Дээрх + товчоор хүн бүрийг нэмээрэй.</div>'}
+    ${L.length?`<div style="overflow-x:auto"><table class="extab"><tr><th>Өдөр</th>${cols.map(([k,,s])=>`<th>${esc(k)}${s?`<br><small>${s}</small>`:''}</th>`).join('')}<th>Нийт</th></tr>
+      ${L.slice().reverse().map(x=>`<tr onclick="UI.repDay='${x.date}';render();window.scrollTo(0,0)" class="${x.date===d?'on':''}"><td>${dayLabel(x.date)}${x.note?' 📝':''}</td>${cols.map(([k,mode])=>`<td>${rv((x.rooms||{})[k])[mode]||''}</td>`).join('')}<td><b>${repTotal(x)}</b></td></tr>`).join('')}
+      <tr class="sum"><td>Нийт</td>${cols.map(c=>`<td>${colTot(c)}</td>`).join('')}<td>${all}</td></tr></table></div>`:'<div class="empty">Энэ сард тайлан бичээгүй байна. Дээрх + товчоор хүн бүрийг нэмээрэй.</div>'}
     <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="repShare('${mo}')" ${L.length?'':'disabled'}>Нэгтгэл хуваалцах</button><button class="btn sm ghost" onclick="roomsForm()">Өрөөнүүд / сануулга</button></div></div>`;
   return out;
 }
-function repEdit(d){const r=(repGet(d)||{}).rooms||{};openForm({title:'Тайлан · '+dayLabel(d),fields:rooms().map(k=>({k:'r_'+k,l:k,type:'number',value:r[k]||0})),
-  onSave:o=>{const n={};rooms().forEach(k=>n[k]=o['r_'+k]);Object.keys(r).forEach(k=>{if(!(k in n))n[k]=r[k]});repSave(d,n)}})}
-function roomsForm(){openForm({title:'Өрөөнүүд',fields:[{k:'rooms',l:'Өрөөнүүд (таслалаар)',value:rooms().join(', '),ph:'CT, MRI, Рентген'},{k:'rem',l:'Орой сануулах цаг (хоосон бол сануулахгүй)',type:'time',value:D.settings.reportRemind||''}],
-  onSave:o=>{const list=o.rooms.split(',').map(s=>s.trim()).filter(Boolean);if(!list.length){toast('Дор хаяж нэг өрөө');return false}D.settings.rooms=[...new Set(list)];D.settings.reportRemind=o.rem}})}
+function repEdit(d){const r=(repGet(d)||{}).rooms||{};
+  const f=rooms().map(k=>isSplit(k)?[{k:'n_'+k,l:k+' — тодосгогчгүй',type:'number',value:rv(r[k]).n},{k:'c_'+k,l:k+' — тодосгогчтой',type:'number',value:rv(r[k]).c}]:{k:'n_'+k,l:k,type:'number',value:rv(r[k]).n});
+  openForm({title:'Тайлан · '+dayLabel(d),fields:f,onSave:o=>{const n=Object.assign({},r);rooms().forEach(k=>{n[k]={n:o['n_'+k]||0,c:o['c_'+k]||0}});repSave(d,n)}})}
+function roomsForm(){openForm({title:'Өрөөнүүд',fields:[
+  {k:'rooms',l:'Өрөөнүүд (таслалаар)',value:rooms().join(', '),ph:'CT, MRI, Рентген'},
+  {k:'cr',l:'Тодосгогчтой / тодосгогчгүй гэж салгах өрөөнүүд',value:contrastRooms().join(', '),ph:'CT, MRI'},
+  {k:'rem',l:'Орой сануулах цаг (хоосон бол сануулахгүй)',type:'time',value:D.settings.reportRemind||''}],
+  onSave:o=>{const list=o.rooms.split(',').map(s=>s.trim()).filter(Boolean);if(!list.length){toast('Дор хаяж нэг өрөө');return false}
+    D.settings.rooms=[...new Set(list)];D.settings.contrastRooms=[...new Set(o.cr.split(',').map(s=>s.trim()).filter(Boolean))];D.settings.reportRemind=o.rem}})}
 function repSummary(mo){
   const [y,m]=mo.split('-').map(Number);const L=(D.reports||[]).filter(x=>ym(x.date)===mo).sort((a,b)=>a.date.localeCompare(b.date));
-  const cols=[...new Set([...rooms(),...L.flatMap(x=>Object.keys(x.rooms||{}))])];
-  return [`Тайлан — ${y} оны ${m} сар`+(D.settings.name?' · '+D.settings.name:''),'',
-    ...L.map(x=>{const dd=parseD(x.date);return `${m}/${dd.getDate()} ${WD[dd.getDay()].slice(0,3)}  `+cols.filter(k=>(x.rooms||{})[k]).map(k=>k+' '+x.rooms[k]).join(', ')+`  = ${repTotal(x)}`+(x.note?' — '+x.note:'')}),'',
-    'Нийт: '+cols.map(k=>k+' '+L.reduce((a,x)=>a+((x.rooms||{})[k]||0),0)).join(', ')+` = ${L.reduce((a,x)=>a+repTotal(x),0)} хүн (${L.length} өдөр)`].join('\n');
+  const keys=[...new Set([...rooms(),...L.flatMap(x=>Object.keys(x.rooms||{}))])];
+  const fmt=(k,o)=>(isSplit(k)||o.c)?`${k} ${o.n}+${o.c}т`:`${k} ${o.n}`;
+  const tot=k=>L.reduce((a,x)=>{const o=rv((x.rooms||{})[k]);return {n:a.n+o.n,c:a.c+o.c}},{n:0,c:0});
+  return [`Тайлан — ${y} оны ${m} сар`+(D.settings.name?' · '+D.settings.name:''),'(тоо = тодосгогчгүй+тодосгогчтой)','',
+    ...L.map(x=>{const dd=parseD(x.date);return `${m}/${dd.getDate()} ${WD[dd.getDay()].slice(0,3)}  `+keys.filter(k=>rsum((x.rooms||{})[k])).map(k=>fmt(k,rv(x.rooms[k]))).join(', ')+`  = ${repTotal(x)}`+(x.note?' — '+x.note:'')}),'',
+    'Нийт:',...keys.filter(k=>{const o=tot(k);return o.n+o.c}).map(k=>{const o=tot(k);return (isSplit(k)||o.c)?`  ${k}: тодосгогчгүй ${o.n}, тодосгогчтой ${o.c} (нийт ${o.n+o.c})`:`  ${k}: ${o.n}`}),
+    `  Бүгд ${L.reduce((a,x)=>a+repTotal(x),0)} хүн (${L.length} өдөр)`].join('\n');
 }
 async function repShare(mo){
   const text=repSummary(mo);
@@ -1360,7 +1400,7 @@ function openQuick(){
 function qDescribe(p){
   if(!p)return '<span class="small">Бичихэд юу үүсгэхийг энд харуулна.</span>';
   if(p.kind==='note')return `<span class="k">📝 Тэмдэглэл</span> — ${esc(p.title)}${p.tags.length?' · '+p.tags.map(t=>'#'+esc(t)).join(' '):''}`;
-  if(p.kind==='report'){const e=Object.entries(p.rooms);return `<span class="k">📋 Тайлан</span> · ${dayLabel(p.date)} · ${e.length?e.map(([k,v])=>esc(k)+' <b>'+v+'</b>').join(', '):'өрөө, тоогоо бичнэ үү (жишээ: CT 12 MRI 5)'}`}
+  if(p.kind==='report'){const e=Object.entries(p.rooms);return `<span class="k">📋 Тайлан</span> · ${dayLabel(p.date)} · ${e.length?e.map(([k,v])=>esc(k)+(v.n!=null?' тодгүй <b>'+v.n+'</b>':'')+(v.c!=null?' тодтой <b>'+v.c+'</b>':'')).join(', '):'өрөө, тоогоо бичнэ үү (жишээ: CT 3 ce 6, MRI 4)'}`}
   if(p.kind==='ot')return `<span class="k">⏱ Илүү цаг</span> · ${dayLabel(p.date)} · ${p.hours?'<b>'+fmtH(p.hours)+' цаг</b>':'<b>цагаа оруулна</b>'}${p.start?' ('+p.start+'–'+p.end+')':''}${p.note?' — '+esc(p.note):''}`;
   if(p.kind==='shop')return `<span class="k">🛒 Худалдан авах</span> — ${p.list.map(esc).join(', ')||'…'}`;
   if(p.kind==='tx')return `<span class="k">${p.type==='in'?'💵 Орлого':'💸 Зарлага'}</span> · <b>${money(p.amount)}</b> · ${catIcon(p.cat)} ${esc(p.cat)}${p.note?' — '+esc(p.note):''}${p.date!==today()?' · '+dayLabel(p.date):''}`;
@@ -1373,7 +1413,7 @@ function quickSave(){
   const p=parseQuick($('#qIn').value);if(!p)return;
   if(p.kind==='note'){if(!p.body)return;D.notes.push({id:uid(),title:p.title,body:p.body,tags:p.tags,pinned:false,updated:Date.now()})}
   else if(p.kind==='shop'){p.list.forEach(x=>D.shopping.push({id:uid(),text:x,done:false}))}
-  else if(p.kind==='report'){if(!Object.keys(p.rooms).length){closeSheet();UI.repDay=p.date;return setView('report')}const cur=Object.assign({},(repGet(p.date)||{}).rooms);Object.entries(p.rooms).forEach(([k,v])=>{const name=rooms().find(r=>r.toLowerCase()===k.toLowerCase())||k;cur[name]=v;if(!rooms().includes(name))D.settings.rooms=[...rooms(),name]});repSave(p.date,cur)}
+  else if(p.kind==='report'){if(!Object.keys(p.rooms).length){closeSheet();UI.repDay=p.date;return setView('report')}const cur=Object.assign({},(repGet(p.date)||{}).rooms);Object.entries(p.rooms).forEach(([k,v])=>{const name=rooms().find(r=>r.toLowerCase()===k.toLowerCase())||k;const o=rv(cur[name]);if(v.n!=null)o.n=v.n;if(v.c!=null)o.c=v.c;cur[name]=o;if(!rooms().includes(name))D.settings.rooms=[...rooms(),name]});repSave(p.date,cur)}
   else if(p.kind==='ot'){if(!p.hours){closeSheet();return otForm(null,p)}(D.ot=D.ot||[]).push({id:uid(),date:p.date,start:p.start,end:p.end,hours:p.hours,note:p.note,created:Date.now()})}
   else if(p.kind==='tx'){D.tx.push({id:uid(),type:p.type,amount:p.amount,cat:p.cat,note:p.note,date:p.date,created:Date.now()})}
   else{if(p.appt&&!p.date){closeSheet();return apptForm(null,p)}
@@ -1500,7 +1540,7 @@ const FB_CFG={apiKey:"AIzaSyDPa2MvJTEPPdFqcfrxJ9HDyyqJMEuShr0",authDomain:"epily
 const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
 const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot','reports'];
-const META_SET=['name','avatar','waterGoal','otRate','shiftLink','rooms','reportRemind'];
+const META_SET=['name','avatar','waterGoal','otRate','shiftLink','rooms','contrastRooms','reportRemind'];
 const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
