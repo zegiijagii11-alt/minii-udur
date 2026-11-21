@@ -237,10 +237,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.1.1';
+const VERSION='1.2.0';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
-  settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8},notified:{}};
+  ot:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:''},notified:{}};
+const SHEET_LINK='https://docs.google.com/spreadsheets/d/1seWg1MBaKH9GCyZ6A-U-omfMONuJNxLg/edit';
+const shiftLink=()=>D.settings.shiftLink||SHEET_LINK;
 function load(){
   try{const x=JSON.parse(localStorage.getItem(KEY)||'null');const d=JSON.parse(JSON.stringify(DEF));
     if(x){Object.assign(d,x);d.settings=Object.assign({},DEF.settings,x.settings||{})}return d}
@@ -294,6 +296,7 @@ function parseQuick(raw){
     const body=m[2].trim();
     return {kind:'note',title:body.split('\n')[0].slice(0,60),body,tags:(body.match(/#[^\s#]+/g)||[]).map(t=>t.slice(1))};
   }
+  if(/илүү\s*цаг/i.test(src))return parseOT(src);
   if(m=src.match(/^(авах|дэлгүүр|худалдаж авах)\s*[:：]\s*([\s\S]*)$/i)){
     return {kind:'shop',list:m[2].split(/[,;\n]/).map(x=>x.trim()).filter(Boolean)};
   }
@@ -350,6 +353,21 @@ function parseQuick(raw){
   let repeat='';
   if(/төрсөн өдөр/.test(L)) repeat='year';
   return {kind:'item',type:isEvent?'event':'task',title:title||src,date:date||'',time:time||'',cat,repeat,remind:isEvent?15:0};
+}
+// Илүү цаг: "илүү цаг 3", "өчигдөр илүү цаг 18:00-21:00", "11/20 илүү цаг 17-20 тайлан"
+const hmMin=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+function otHours(a,b){let d=hmMin(b)-hmMin(a);if(d<=0)d+=1440;return Math.round(d/6)/10}
+function parseOT(src){
+  let s=' '+src.replace(/илүү\s*цаг(аар|ийн)?/i,' ')+' ';let date=today(),m;const L=s.toLowerCase();
+  if(/\sөчигдөр/.test(L)){date=addDays(date,-1);s=s.replace(/\sөчигдөр\S*/i,' ')}
+  else if(/\sуржигдар/.test(L)){date=addDays(date,-2);s=s.replace(/\sуржигдар\S*/i,' ')}
+  else s=s.replace(/\s(өнөөдөр|өнөө)\S*/i,' ');
+  if(m=s.match(/\s(\d{1,2})\/(\d{1,2})(?:-?нд|-?д|-?т)?(?=\s)/)){let d=mkDate(+m[1],+m[2]);if(d){if(d>today())d=(+d.slice(0,4)-1)+d.slice(4);date=d;s=s.replace(m[0],' ')}}
+  let start='',end='',hours=null;
+  if(m=s.match(/\s(\d{1,2})(?::(\d{2}))?\s*[-–]\s*(\d{1,2})(?::(\d{2}))?(?:\s*цаг\S*)?(?=\s)/)){
+    if(+m[1]<24&&+m[3]<24){start=pad(+m[1])+':'+(m[2]||'00');end=pad(+m[3])+':'+(m[4]||'00');hours=otHours(start,end);s=s.replace(m[0],' ')}}
+  else if(m=s.match(/\s(\d+(?:[.,]\d+)?)\s*(цаг\S*|ц)?(?=\s)/)){hours=parseFloat(m[1].replace(',','.'));s=s.replace(m[0],' ')}
+  return {kind:'ot',date,start,end,hours,note:s.replace(/\s+/g,' ').trim()};
 }
 function mkDate(mo,da){
   if(mo<1||mo>12||da<1||da>31)return null;
@@ -421,7 +439,7 @@ function render(){
   document.documentElement.style.setProperty('--fs',(D.settings.fs||16)+'px');
   const th=D.settings.theme;if(th==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=th;
   if(VIEW==='grp'&&!groups()[UI.grp])VIEW='home';
-  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
+  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='ot'?'Илүү цаг':VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
   const inGrp=VIEW==='grp'||!!UI.back;
   $('#navBtn').innerHTML=`<svg viewBox="0 0 24 24">${inGrp?TILE_ICONS.back:'<path d="M4 7h16M4 12h16M4 17h16"/>'}</svg>`;
   $('#navBtn').setAttribute('aria-label',inGrp?'Буцах':'Цэс');
@@ -429,7 +447,7 @@ function render(){
   const bn=bellItems().length;$('#bellN').textContent=bn>99?'99+':bn;$('#bellN').classList.toggle('hidden',!bn);
   const navOn=VIEW==='grp'||UI.back?'home':VIEW;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===navOn));
-  $('#view').innerHTML=({home:vHome,grp:vGroup,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
+  $('#view').innerHTML=({home:vHome,grp:vGroup,ot:vOT,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
   hydrateImgs($('#view'));
   if(VIEW==='notes'){const q=$('#noteQ');if(q&&UI._focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
 }
@@ -466,6 +484,7 @@ Object.assign(TILE_ICONS,{
   link:'<path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
   logout:'<path d="M14 4.5h4.5A1.5 1.5 0 0 1 20 6v12a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
+  clock:'<circle class="f" cx="12" cy="12.5" r="8"/><path d="M12 8v4.5l3 2M9.5 2.5h5"/>',
   camera:'<path class="f" d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3l1.5-2h5.4l1.5 2h2.3A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/>'});
 // Нүүрний 5 бүлэг → дотор нь ангиллууд. go: очих газар, sec: зөвхөн тухайн хэсгийг харуулах, act: маягт нээх
 function groups(){
@@ -477,6 +496,8 @@ function groups(){
   return {
     ajil:{l:'Ажил',ic:'ajil',subs:[
       {k:'today',l:'Ажлын төлөвлөгөө',n:pend('ajil'),go:()=>goPlan('ajil')},
+      {k:'link',l:'Ээлжийн хуваарь ↗',act:()=>window.open(shiftLink(),'_blank')},
+      {k:'clock',l:'Илүү цаг',go:()=>{UI.otMonth=null;setView('ot')}},
       {k:'plus',l:'Ажил нэмэх',act:()=>itemForm(null,{cat:'ajil',date:today()})},
       {k:'today',l:'Уулзалт нэмэх',act:()=>itemForm(null,{cat:'ajil',type:'event',date:today()})}]},
     huviin:{l:'Хувийн',ic:'huviin',subs:[
@@ -537,6 +558,54 @@ function goBack(){const g=UI.back;UI.grp=g;setView('grp')}
 function goPlan(cat){UI.planCat=cat;UI.planDay=today();UI.planWeek=weekStart(today());setView('plan')}
 function goLife(sub){UI.life=sub;setView('life')}
 
+/* ---------- Илүү цаг ---------- */
+const fmtH=h=>(Math.round((h||0)*10)/10).toString().replace(/\.0$/,'');
+function otMonth(mo){const L=(D.ot||[]).filter(x=>ym(x.date)===mo).sort((a,b)=>a.date.localeCompare(b.date)||(a.start||'').localeCompare(b.start||''));
+  return {L,tot:L.reduce((a,x)=>a+(+x.hours||0),0),days:new Set(L.map(x=>x.date)).size}}
+function vOT(){
+  const mo=UI.otMonth||ym(today());const [y,m]=mo.split('-').map(Number);
+  const sh=k=>{const d=new Date(y,m-1+k,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+  const {L,tot,days}=otMonth(mo);const rate=+D.settings.otRate||0;
+  const yearTot=(D.ot||[]).filter(x=>x.date.slice(0,4)===String(y)).reduce((a,x)=>a+(+x.hours||0),0);
+  let out=`<div class="card"><h2><button class="lnk" onclick="UI.otMonth='${sh(-1)}';render()">‹</button><span style="flex:1;text-align:center">${y} оны ${m} сар</span><button class="lnk" onclick="UI.otMonth='${sh(1)}';render()">›</button></h2>
+    <div class="stats"><div class="stat"><small>Нийт илүү цаг</small><b class="big">${fmtH(tot)}</b></div><div class="stat"><small>Өдөр</small><b class="big">${days}</b></div>
+    <div class="stat"><small>Тооцоолсон дүн</small><b>${rate?money(tot*rate):'—'}</b></div></div>
+    <div class="small" style="margin-top:8px">${rate?'Цагийн хөлс '+money(rate)+' · ':''}${y} онд нийт ${fmtH(yearTot)} цаг</div>
+    <div class="btns" style="margin-top:12px"><button class="btn primary" onclick="otForm(null)">+ Илүү цаг</button><button class="btn" onclick="otShare('${mo}')" ${L.length?'':'disabled'}>Нэгтгэл хуваалцах</button><button class="btn ghost" onclick="otRateForm()">Цагийн хөлс</button></div></div>`;
+  out+=`<div class="card"><h2>Бүртгэл</h2>${L.length?L.map(x=>`<div class="row" style="cursor:pointer" onclick="otForm('${x.id}')"><div style="min-width:78px"><b>${dayLabel(x.date)}</b></div>
+      <div class="main"><div class="ttl">${x.start?x.start+'–'+x.end:'Цаг заагаагүй'}${x.note?' · '+esc(x.note):''}</div></div><span class="amt">${fmtH(x.hours)} ц</span></div>`).join('')
+    :'<div class="empty">Энэ сард илүү цаг бүртгээгүй. Хурдан нэмэхэд “илүү цаг 3” эсвэл “өчигдөр илүү цаг 18:00-21:00” гэж бичиж болно.</div>'}</div>`;
+  return out;
+}
+function otForm(id,preset={}){
+  let x=id?D.ot.find(o=>o.id===id):null;const isNew=!x;if(!x)x=Object.assign({date:today(),start:'',end:'',hours:null,note:''},preset);
+  openForm({title:isNew?'Илүү цаг нэмэх':'Илүү цаг',fields:[
+    {k:'date',l:'Огноо',type:'date',value:x.date},
+    [{k:'start',l:'Эхэлсэн',type:'time',value:x.start},{k:'end',l:'Дууссан',type:'time',value:x.end}],
+    {k:'hours',l:'Цаг (эхлэх/дуусах оруулбал өөрөө бодно)',type:'number',value:x.hours,ph:'Жишээ: 2.5'},
+    {k:'note',l:'Тайлбар',value:x.note,ph:'Шалтгаан, хийсэн ажил'}],
+    onSave:o=>{if(o.start&&o.end)o.hours=otHours(o.start,o.end);
+      if(!o.hours||o.hours<=0){toast('Цагаа оруулна уу');return false}if(o.hours>24){toast('24-өөс их цаг байж болохгүй');return false}
+      o.hours=Math.round(o.hours*10)/10;if(!o.date)o.date=today();
+      if(isNew)(D.ot=D.ot||[]).push(Object.assign({id:uid(),created:Date.now()},o));else Object.assign(x,o);toast('Хадгаллаа · '+fmtH(o.hours)+' цаг')},
+    onDelete:isNew?null:()=>{D.ot=D.ot.filter(o=>o.id!==x.id)}});
+  const upd=()=>{const a=$('#f_start').value,b=$('#f_end').value;if(a&&b)$('#f_hours').value=otHours(a,b)};
+  $('#f_start').onchange=upd;$('#f_end').onchange=upd;
+}
+function otRateForm(){openForm({title:'Илүү цагийн хөлс',fields:[{k:'r',l:'1 цагийн хөлс (₮) — 0 бол тооцохгүй',type:'number',value:D.settings.otRate||''}],onSave:o=>{D.settings.otRate=o.r||0}})}
+function otSummary(mo){
+  const [y,m]=mo.split('-').map(Number);const {L,tot,days}=otMonth(mo);const rate=+D.settings.otRate||0;
+  return [`Илүү цаг — ${y} оны ${m} сар`+(D.settings.name?' · '+D.settings.name:''),'',
+    ...L.map(x=>{const d=parseD(x.date);return `${m}/${d.getDate()} ${WD[d.getDay()].slice(0,3)}  ${x.start?x.start+'–'+x.end+'  ':''}${fmtH(x.hours)} цаг${x.note?' — '+x.note:''}`}),'',
+    `Нийт: ${fmtH(tot)} цаг (${days} өдөр)`+(rate?`\nДүн: ${fmtH(tot)} × ${money(rate)} = ${money(tot*rate)}`:'')].join('\n');
+}
+async function otShare(mo){
+  const text=otSummary(mo);
+  try{if(navigator.share){await navigator.share({title:'Илүү цаг',text});return}}catch(e){if(e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text);toast('Нэгтгэлийг хуулсан — чат, имэйлд буулгаарай')}
+  catch(e){openSheet(`<h3>Нэгтгэл</h3><textarea rows="12" readonly>${esc(text)}</textarea><div class="row-btns"><span class="sp"></span><button class="btn primary" onclick="closeSheet()">Хаах</button></div>`)}
+}
+
 /* ---------- Хажуугийн цэс, хонх ---------- */
 function openMenu(){
   const s=D.settings;const ini=(s.name||'?').trim().slice(0,1).toUpperCase();
@@ -549,7 +618,7 @@ function openMenu(){
       ${row('today','Өнөөдөр',"setView('today')")}
       ${Object.entries(groups()).map(([k,g])=>row(g.ic,g.l,`openGroup('${k}')`,sumN(g))).join('')}
       <div class="dr-sec">Бусад</div>
-      ${row('search','Хайх','openSearch()')}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
+      ${row('search','Хайх','openSearch()')}${row('link','Ээлжийн хуваарь ↗',"window.open(shiftLink(),'_blank')")}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
     </div>`;
   $('#drawer').classList.remove('hidden');
 }
@@ -1023,6 +1092,7 @@ function openQuick(){
 function qDescribe(p){
   if(!p)return '<span class="small">Бичихэд юу үүсгэхийг энд харуулна.</span>';
   if(p.kind==='note')return `<span class="k">📝 Тэмдэглэл</span> — ${esc(p.title)}${p.tags.length?' · '+p.tags.map(t=>'#'+esc(t)).join(' '):''}`;
+  if(p.kind==='ot')return `<span class="k">⏱ Илүү цаг</span> · ${dayLabel(p.date)} · ${p.hours?'<b>'+fmtH(p.hours)+' цаг</b>':'<b>цагаа оруулна</b>'}${p.start?' ('+p.start+'–'+p.end+')':''}${p.note?' — '+esc(p.note):''}`;
   if(p.kind==='shop')return `<span class="k">🛒 Худалдан авах</span> — ${p.list.map(esc).join(', ')||'…'}`;
   if(p.kind==='tx')return `<span class="k">${p.type==='in'?'💵 Орлого':'💸 Зарлага'}</span> · <b>${money(p.amount)}</b> · ${catIcon(p.cat)} ${esc(p.cat)}${p.note?' — '+esc(p.note):''}${p.date!==today()?' · '+dayLabel(p.date):''}`;
   const c=CATS[p.cat];
@@ -1034,6 +1104,7 @@ function quickSave(){
   const p=parseQuick($('#qIn').value);if(!p)return;
   if(p.kind==='note'){if(!p.body)return;D.notes.push({id:uid(),title:p.title,body:p.body,tags:p.tags,pinned:false,updated:Date.now()})}
   else if(p.kind==='shop'){p.list.forEach(x=>D.shopping.push({id:uid(),text:x,done:false}))}
+  else if(p.kind==='ot'){if(!p.hours){closeSheet();return otForm(null,p)}(D.ot=D.ot||[]).push({id:uid(),date:p.date,start:p.start,end:p.end,hours:p.hours,note:p.note,created:Date.now()})}
   else if(p.kind==='tx'){D.tx.push({id:uid(),type:p.type,amount:p.amount,cat:p.cat,note:p.note,date:p.date,created:Date.now()})}
   else{if(p.appt&&!p.date){closeSheet();return apptForm(null,p)}
     const it={id:uid(),type:p.type,title:p.title,cat:p.cat,date:p.date,time:p.time,remind:p.remind,repeat:p.repeat,note:'',created:Date.now()};
@@ -1045,6 +1116,7 @@ function quickEdit(){
   if(!p)return itemForm(null,{});
   if(p.kind==='note')return noteForm(null,{title:p.title,body:p.body,tags:p.tags});
   if(p.kind==='shop'){UI.life='home';closeSheet();return setView('life')}
+  if(p.kind==='ot')return otForm(null,{date:p.date,start:p.start,end:p.end,hours:p.hours,note:p.note});
   if(p.kind==='tx')return txForm(null,p.type,{amount:p.amount,cat:p.cat,note:p.note,date:p.date});
   if(p.appt)return apptForm(null,{appt:p.appt,title:p.title,date:p.date,time:p.time,remind:p.remind,remind2:p.remind2});
   itemForm(null,{type:p.type,title:p.title,cat:p.cat,date:p.date,time:p.time,remind:p.remind,repeat:p.repeat});
@@ -1070,6 +1142,7 @@ function openSettings(){
     <div class="fld2"><div class="fld"><label>Өнгө</label><select id="sTheme"><option value="auto">Автомат</option><option value="light">Цайвар</option><option value="dark">Бараан</option></select></div>
     <div class="fld"><label>Үсгийн хэмжээ</label><select id="sFs"><option value="15">Жижиг</option><option value="16">Дунд</option><option value="18">Том</option><option value="20">Маш том</option></select></div></div>
     <div class="fld"><label>Өдрийн усны зорилго (аяга)</label><input id="sWater" type="number" value="${s.waterGoal||8}"></div>
+    <div class="fld"><label>Ээлжийн хуваарийн холбоос</label><input id="sShift" value="${esc(s.shiftLink||'')}" placeholder="${esc(SHEET_LINK)}"></div>
     <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.':perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
       <div class="btns" style="margin-top:8px"><button class="btn sm" onclick="enableNotify()">${s.notify?'Дахин шалгах':'Асаах'}</button>${s.notify?'<button class="btn sm ghost" onclick="D.settings.notify=false;save();openSettings()">Унтраах</button>':''}</div></div>
     <div class="card"><h2>Бүртгэл</h2><div class="small">${fbUser?'<b style="color:var(--ok)">✓ Нэвтэрсэн</b> · '+esc(fbUser.email||fbUser.displayName||''):'Нэвтрээгүй'}<br>${syncLabel()}</div>
@@ -1080,7 +1153,7 @@ function openSettings(){
     <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
     <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}</div>`);
   $('#sTheme').value=s.theme;$('#sFs').value=String(s.fs||16);
-  $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));save();closeSheet();render()};
+  $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';save();closeSheet();render()};
 }
 async function enableNotify(){
   if(!('Notification' in window)){toast('Энэ хөтөч сануулга дэмжихгүй');return}
@@ -1140,6 +1213,8 @@ function checkReminders(){
     const bills=billsDue(1).length;
     if(tasks||bills)fire('morning'+t,'☀️ Өнөөдөр',[tasks?tasks+' ажил':'',bills?bills+' төлбөр ойртсон':''].filter(Boolean).join(', '));
   }
+  // Сарын сүүлийн өдөр: илүү цагийн нэгтгэл
+  if(addDays(t,1).slice(8)==='01'&&mins>=18*60&&mins<23*60){const s=otMonth(ym(t));if(s.L.length)fire('otm'+ym(t),'⏱ Энэ сарын илүү цаг',fmtH(s.tot)+' цаг · '+s.days+' өдөр'+(D.settings.otRate?' · '+money(s.tot*D.settings.otRate):''))}
   if(mins>=21*60&&mins<23*60&&!(D.journal[t]&&D.journal[t].mood))fire('j'+t,'✍️ Оройн 2 минут','Өнөөдөр ямар байв?');
   Object.keys(D.notified).forEach(k=>{if(D.notified[k]<addDays(t,-2)){delete D.notified[k];changed=true}});
   if(changed)save();
@@ -1151,8 +1226,8 @@ const FB_CFG={apiKey:"AIzaSyDPa2MvJTEPPdFqcfrxJ9HDyyqJMEuShr0",authDomain:"epily
   storageBucket:"epilyse--2026.firebasestorage.app",messagingSenderId:"1002632017161",appId:"1:1002632017161:web:bf5b3aaac4835d63e68fd8"};
 const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
-const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores'];
-const META_SET=['name','avatar','waterGoal'];
+const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot'];
+const META_SET=['name','avatar','waterGoal','otRate','shiftLink'];
 const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
