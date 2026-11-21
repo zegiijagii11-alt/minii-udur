@@ -78,6 +78,15 @@ main{padding:0 16px 72px;max-width:720px;margin:0 auto}
 .lightbox img{max-width:100%;max-height:80vh;border-radius:8px;object-fit:contain}
 .lbcap{color:#eee;text-align:center;max-width:640px;white-space:pre-wrap}
 .lbx{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;border:0;background:rgba(255,255,255,.15);color:#fff;width:42px;height:42px;border-radius:50%;font-size:1.1rem}
+.auth{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 20px;overflow:auto}
+.auth-box{width:100%;max-width:360px;text-align:center;display:flex;flex-direction:column;gap:10px}
+.auth-box h1{margin:0;font-size:1.5rem;font-weight:600}
+.auth-logo{width:84px;height:84px;margin:0 auto 4px;border-radius:22px}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--card);padding:12px}
+.or{color:var(--muted);font-size:.85rem;margin:6px 0 0}
+.auth-links{display:flex;justify-content:space-between}
+.auth-msg{min-height:1.2em;font-size:.88rem;color:var(--bad)}
+.auth-msg.ok{color:var(--ok)}
 .drawer{position:fixed;inset:0;z-index:15}
 .drawer-bg{position:absolute;inset:0;background:rgba(20,22,20,.45)}
 .drawer-body{position:absolute;left:0;top:0;bottom:0;width:min(80vw,330px);background:var(--bg);overflow:auto;animation:slin .2s ease-out;padding-bottom:env(safe-area-inset-bottom)}
@@ -202,6 +211,21 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
   <button data-v="money" aria-label="Санхүү"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/></svg></button>
   <button data-v="life" aria-label="Эрүүл & Ахуй"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
 </nav>
+<div id="auth" class="auth hidden">
+  <div class="auth-box">
+    <img src="icon-192.png" class="auth-logo" alt="">
+    <h1>Миний өдөр</h1>
+    <div class="sub" style="margin-bottom:10px">Ажил, эрүүл мэнд, санхүү — нэг дор</div>
+    <button class="btn gbtn" onclick="fbGoogle()"><svg viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Google-ээр нэвтрэх</button>
+    <div class="or">эсвэл имэйлээр</div>
+    <input id="aEmail" type="email" placeholder="Имэйл" autocomplete="email">
+    <input id="aPass" type="password" placeholder="Нууц үг (6+ тэмдэгт)" autocomplete="current-password" onkeydown="if(event.key==='Enter')fbEmail()">
+    <button class="btn primary" id="aSubmit" onclick="fbEmail()">Нэвтрэх</button>
+    <div class="auth-links"><button class="lnk" id="aToggle" onclick="fbToggle()">Бүртгэл үүсгэх</button><button class="lnk" onclick="fbReset()">Нууц үгээ мартсан</button></div>
+    <div id="aMsg" class="auth-msg"></div>
+    <div class="small" style="margin-top:14px">🔒 Таны мэдээлэл зөвхөн танд харагдана.</div>
+  </div>
+</div>
 <div id="drawer" class="drawer hidden"><div class="drawer-bg" onclick="closeDrawer()"></div><aside class="drawer-body" id="drawerBody"></aside></div>
 <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="setAvatar(event)">
 <input type="file" id="camIn" accept="image/*" capture="environment" class="hidden" onchange="addPhotos(event)">
@@ -213,7 +237,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,sheetUrl:'',sheetKey:'',sheetName:'',sheetRemind:60,sheetLast:0},sheetPeople:[],notified:{}};
@@ -223,7 +247,8 @@ function load(){
   catch(e){return JSON.parse(JSON.stringify(DEF))}
 }
 let D=load();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('⚠️ Хадгалж чадсангүй')}}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('⚠️ Хадгалж чадсангүй')}}
+function save(){saveLocal();cloudSchedule()}
 
 /* ===================== Туслах функцүүд ===================== */
 // PARSER-START
@@ -440,6 +465,7 @@ Object.assign(TILE_ICONS,{
   broom:'<path d="M15 3l-3.5 8.5"/><path class="f" d="M7.5 11.5h8l1.8 8.5H5.7z"/><path d="M9.5 15.5l-.5 4.5M13.5 15.5l.5 4.5"/>',
   link:'<path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
+  logout:'<path d="M14 4.5h4.5A1.5 1.5 0 0 1 20 6v12a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
   camera:'<path class="f" d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3l1.5-2h5.4l1.5 2h2.3A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/>'});
 // Нүүрний 5 бүлэг → дотор нь ангиллууд. go: очих газар, sec: зөвхөн тухайн хэсгийг харуулах, act: маягт нээх
 function groups(){
@@ -527,13 +553,13 @@ function openMenu(){
   const row=(k,l,fn,n)=>`<button class="menu-row" onclick="closeDrawer();${fn}"><svg viewBox="0 0 24 24">${TILE_ICONS[k]}</svg><span style="flex:1">${l}</span>${n?`<span class="tag">${n}</span>`:''}</button>`;
   $('#drawerBody').innerHTML=`<div class="dr-head"><div class="dr-app">Миний өдөр, v${VERSION}</div>
       <button class="avatar" onclick="$('#avatarInput').click()" aria-label="Профайл зураг солих">${s.avatar?`<img src="${s.avatar}" alt="">`:`<span>${esc(ini)}</span>`}</button>
-      <div class="dr-name">${esc((s.name||'Нэрээ оруулах').toUpperCase())}</div></div>
+      <div class="dr-name">${esc((s.name||'Нэрээ оруулах').toUpperCase())}</div>${fbUser?`<div class="small" style="margin-top:4px">${esc(fbUser.email||'')} · ${fbState==='error'?'⚠️':'☁️'}</div>`:''}</div>
     <div class="dr-list"><div class="dr-sec">Үндсэн цэс</div>
       ${row('grid','Нүүр',"setView('home')")}
       ${row('today','Өнөөдөр',"setView('today')")}
       ${Object.entries(groups()).map(([k,g])=>row(g.ic,g.l,`openGroup('${k}')`,sumN(g))).join('')}
       <div class="dr-sec">Бусад</div>
-      ${row('search','Хайх','openSearch()')}${row('roster','Ажлын хуваарь холбох','openRoster()')}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}
+      ${row('search','Хайх','openSearch()')}${row('roster','Ажлын хуваарь холбох','openRoster()')}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
     </div>`;
   $('#drawer').classList.remove('hidden');
 }
@@ -923,7 +949,7 @@ const imgGet=id=>idbDo('readonly',s=>s.get(id));
 const imgDel=id=>{const u=IMGURL.get(id);if(u){URL.revokeObjectURL(u);IMGURL.delete(id)}return idbDo('readwrite',s=>s.delete(id))};
 const imgKeys=()=>idbDo('readonly',s=>s.getAllKeys());
 const IMGURL=new Map();
-async function imgUrl(id){if(IMGURL.has(id))return IMGURL.get(id);try{const b=await imgGet(id);if(!b)return '';const u=URL.createObjectURL(b);IMGURL.set(id,u);return u}catch(e){return ''}}
+async function imgUrl(id){if(IMGURL.has(id))return IMGURL.get(id);try{let b=await imgGet(id);if(!b)b=await cloudPhoto(id);if(!b)return '';const u=URL.createObjectURL(b);IMGURL.set(id,u);return u}catch(e){return ''}}
 function hydrateImgs(root){(root||document).querySelectorAll('img[data-img]:not([src])').forEach(async el=>{const u=await imgUrl(el.dataset.img);if(u)el.src=u;else el.closest('.ph')&&el.closest('.ph').classList.add('missing')})}
 function compressImage(file,max=1600,q=.8){
   return new Promise((res,rej)=>{const img=new Image();
@@ -1057,7 +1083,9 @@ function openSettings(){
     <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.':perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
       <div class="btns" style="margin-top:8px"><button class="btn sm" onclick="enableNotify()">${s.notify?'Дахин шалгах':'Асаах'}</button>${s.notify?'<button class="btn sm ghost" onclick="D.settings.notify=false;save();openSettings()">Унтраах</button>':''}</div></div>
     <div class="card"><h2>Ажлын хуваарь<span class="sp"></span><button class="lnk" onclick="openRoster()">${s.sheetName?'Тохируулах':'Холбох'}</button></h2><div class="small">${s.sheetName?esc(s.sheetName)+' · '+(s.sheetLast?'шинэчилсэн '+new Date(s.sheetLast).toLocaleString('mn-MN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—'):'Google Sheet дэх ээлжийн хуваарийг холбоно.'}</div></div>
-    <div class="card"><h2>Нөөц хуулбар</h2><div class="small">Бүх мэдээлэл зөвхөн энэ төхөөрөмж дээр хадгалагдана. Утас солих, апп устгахаас өмнө нөөц хуулбар авч Drive, имэйл рүүгээ хадгалаарай.</div>
+    <div class="card"><h2>Бүртгэл</h2><div class="small">${fbUser?'<b style="color:var(--ok)">✓ Нэвтэрсэн</b> · '+esc(fbUser.email||fbUser.displayName||''):'Нэвтрээгүй'}<br>${syncLabel()}</div>
+      <div class="btns" style="margin-top:8px">${fbUser?'<button class="btn sm" onclick="cloudPush();toast(\'Синк хийлээ\')">Одоо синк хийх</button><button class="btn sm danger ghost" onclick="logout()">Гарах</button>':'<button class="btn sm primary" onclick="closeSheet();showAuth(true,\'\')">Нэвтрэх</button>'}</div></div>
+    <div class="card"><h2>Нөөц хуулбар</h2><div class="small">Мэдээлэл тань үүлэнд автоматаар хадгалагдана. Нэмэлт хамгаалалт болгож файлаар хуулбар авч болно.</div>
       <div class="btns" style="margin-top:8px"><button class="btn sm primary" onclick="exportBackup()">Нөөц авах</button><button class="btn sm" onclick="$('#restoreInput').click()">Сэргээх</button></div>
       <div class="small" style="margin-top:6px">Сүүлд нөөц авсан: ${s.lastBackup?dayLabel(s.lastBackup):'хэзээ ч'}</div></div>
     <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
@@ -1226,6 +1254,208 @@ function unlinkRoster(){
 }
 const autoRoster=()=>{if(D.settings.sheetUrl&&navigator.onLine!==false&&Date.now()-(D.settings.sheetLast||0)>30*60000)syncRoster(false)};
 
+/* ===================== Нэвтрэлт, үүлэн хадгалалт (Firebase) ===================== */
+// Эм & Уналттай нэг Firebase төсөл; мэдээлэл users/{uid}/mu_<хэсэг>/{id} доор тусдаа.
+const FB_CFG={apiKey:"AIzaSyDPa2MvJTEPPdFqcfrxJ9HDyyqJMEuShr0",authDomain:"epilyse--2026.firebaseapp.com",projectId:"epilyse--2026",
+  storageBucket:"epilyse--2026.firebasestorage.app",messagingSenderId:"1002632017161",appId:"1:1002632017161:web:bf5b3aaac4835d63e68fd8"};
+const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
+const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
+const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores'];
+const META_SET=['name','avatar','waterGoal','sheetUrl','sheetKey','sheetName','sheetRemind'];
+const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+// SYNC-START
+// Түлхүүрийн дарааллаас үл хамааран ижил объектод ижил мөр өгнө (өөрчлөлт илрүүлэх)
+function stable(v){if(Array.isArray(v))return '['+v.map(stable).join(',')+']';
+  if(v&&typeof v==='object')return '{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+  return JSON.stringify(v===undefined?null:v)}
+const clean=o=>JSON.parse(JSON.stringify(o));
+// 3 талын нэгтгэл: L=энэ төхөөрөмж, C=үүл, s=сүүлд синк хийсэн төлөв. Буцаах: үүл рүү бичих үйлдлүүд.
+function reconcileSpace(sp,cloud,sy){
+  const loc=sp.local();const ops=[];
+  new Set([...loc.keys(),...cloud.keys(),...Object.keys(sy)]).forEach(id=>{
+    const L=loc.get(id),C=cloud.get(id),s=sy[id];const lj=L&&stable(clean(L)),cj=C&&stable(C);
+    if(L&&C){if(lj===cj){sy[id]=cj}
+      else if(s===undefined||lj===s){sp.apply(id,C);sy[id]=cj}     // зөвхөн үүл өөрчлөгдсөн (эсвэл анх удаа) → үүлийнх
+      else{ops.push(['set',id,L]);sy[id]=lj}}                         // энд өөрчилсөн → энэ төхөөрөмжийнх
+    else if(L){if(s!==undefined&&lj===s){sp.apply(id,null);delete sy[id]}   // өөр төхөөрөмж дээр устгасан
+      else{ops.push(['set',id,L]);sy[id]=lj}}                         // шинээр нэмсэн
+    else if(C){if(s!==undefined&&cj===s){ops.push(['del',id]);delete sy[id]} // энд устгасан
+      else{sp.apply(id,C);sy[id]=cj}}                                  // өөр төхөөрөмж дээр нэмсэн
+    else delete sy[id];
+  });
+  return ops;
+}
+// Тухайн мөчийн өөрчлөлтүүд (сүүлийн синктэй харьцуулж)
+function diffSpace(sp,sy){
+  const loc=sp.local(),ops=[];
+  loc.forEach((L,id)=>{const lj=stable(clean(L));if(sy[id]!==lj){ops.push(['set',id,L]);sy[id]=lj}});
+  Object.keys(sy).forEach(id=>{if(!loc.has(id)){ops.push(['del',id]);delete sy[id]}});
+  return ops;
+}
+// SYNC-END
+let SY=lsGet(SY_KEY)||{};
+function spaces(){
+  const S=SYNC_COLS.map(c=>({name:c,
+    local:()=>new Map((D[c]||[]).filter(x=>x&&x.id!=null).map(x=>[String(x.id),x])),
+    apply:(id,o)=>{const a=D[c]=D[c]||[];const k=a.findIndex(x=>String(x.id)===id);if(o==null){if(k>=0)a.splice(k,1)}else if(k>=0)a[k]=o;else a.push(o)}}));
+  const DM=['medLog','habitLog','water','journal'];
+  S.push({name:'days',
+    local:()=>{const m=new Map();new Set(DM.flatMap(k=>Object.keys(D[k]||{}))).forEach(d=>{const o={id:d};
+      DM.forEach(k=>{const v=(D[k]||{})[d];if(v&&(typeof v!=='object'||Object.keys(v).length))o[k]=v});if(Object.keys(o).length>1)m.set(d,o)});return m},
+    apply:(id,o)=>{DM.forEach(k=>{D[k]=D[k]||{};if(o&&o[k]!=null)D[k][id]=o[k];else delete D[k][id]})}});
+  S.push({name:'meta',
+    local:()=>{const s={};META_SET.forEach(k=>{const v=D.settings[k];if(v!==undefined&&v!==''&&v!==null)s[k]=v});return new Map([['main',{id:'main',budget:D.budget||0,sheetPeople:D.sheetPeople||[],s}]])},
+    apply:(id,o)=>{if(!o)return;D.budget=o.budget||0;D.sheetPeople=o.sheetPeople||[];META_SET.forEach(k=>{D.settings[k]=o.s&&o.s[k]!==undefined?o.s[k]:DEF.settings[k]})}});
+  return S;
+}
+const docRef=(sp,id)=>fb.doc(fbDb,'users',fbUser.uid,'mu_'+sp,String(id).replace(/\//g,'_'));
+let _rT=null;
+function scheduleRender(){clearTimeout(_rT);_rT=setTimeout(()=>{if(VIEW!=='notes'||!document.activeElement||document.activeElement.id!=='noteQ')render()},120)}
+function setFbState(s){fbState=s}
+function syncLabel(){
+  if(!fbUser)return 'Мэдээлэл зөвхөн энэ төхөөрөмж дээр.';
+  return ({loading:'Үүлтэй тулгаж байна…',saving:navigator.onLine?'Хадгалж байна…':'Интернет хүлээж байна — өөрчлөлт утсанд хадгалагдсан, холбогдмогц илгээнэ.',
+    ok:'☁️ Үүлэнд хадгалагдсан, бүх төхөөрөмж дээр шинэчлэгдэнэ.',error:'⚠️ '+fbErrMsg})[fbState]||'';
+}
+function cloudError(e){
+  const c=(e&&e.code)||'';
+  fbErrMsg=c==='permission-denied'?'Үүлэн сан зөвшөөрөхгүй байна — Firebase-ийн Firestore Rules-ийг шинэчлэх хэрэгтэй.':'Үүлэнд хадгалж чадсангүй ('+(c||e&&e.message||'алдаа')+')';
+  if(fbState!=='error')toast('⚠️ '+fbErrMsg);setFbState('error');
+}
+let _pushT=null;
+function cloudSchedule(){if(!fbUser||!fbReconciled)return;clearTimeout(_pushT);_pushT=setTimeout(cloudPush,600)}
+function cloudPush(){
+  if(!fbUser||!fbReconciled)return;clearTimeout(_pushT);
+  const ops=[];spaces().forEach(sp=>diffSpace(sp,SY[sp.name]=SY[sp.name]||{}).forEach(op=>ops.push([sp.name,...op])));
+  lsSet(SY_KEY,SY);if(ops.length)commitOps(ops);syncPhotos();
+}
+async function commitOps(ops){
+  setFbState('saving');
+  try{for(let i=0;i<ops.length;i+=400){const b=fb.writeBatch(fbDb);
+      ops.slice(i,i+400).forEach(([sp,op,id,o])=>op==='set'?b.set(docRef(sp,id),clean(o)):b.delete(docRef(sp,id)));await b.commit()}
+    if(fbState!=='error')setFbState('ok')}
+  catch(e){cloudError(e);SY={};lsSet(SY_KEY,SY)} // дараагийн удаа бүгдийг дахин тулгана
+}
+function cloudUnsub(){fbUnsubs.forEach(u=>{try{u()}catch(e){}});fbUnsubs=[]}
+function cloudSubscribe(){
+  cloudUnsub();fbReconciled=false;setFbState('loading');const latest={};const S=spaces();
+  S.forEach(sp=>{
+    fbUnsubs.push(fb.onSnapshot(fb.collection(fbDb,'users',fbUser.uid,'mu_'+sp.name),{includeMetadataChanges:true},snap=>{
+      if(!fbReconciled){
+        if(snap.metadata.fromCache)return; // серверийн бүтэн хариуг хүлээнэ
+        latest[sp.name]=new Map(snap.docs.map(d=>{const o=d.data();return [String(o.id!=null?o.id:d.id),o]}));
+        if(!S.every(x=>latest[x.name]))return;
+        const ops=[];S.forEach(x=>reconcileSpace(x,latest[x.name],SY[x.name]=SY[x.name]||{}).forEach(op=>ops.push([x.name,...op])));
+        fbReconciled=true;lsSet(SY_KEY,SY);saveLocal();scheduleRender();
+        if(ops.length)commitOps(ops);else setFbState('ok');syncPhotos();return;
+      }
+      const sy=SY[sp.name]=SY[sp.name]||{};let ch=false;
+      snap.docChanges().forEach(c=>{
+        if(c.doc.metadata.hasPendingWrites)return; // өөрийн бичилт
+        const o=c.doc.data();const id=String(o&&o.id!=null?o.id:c.doc.id);
+        if(c.type==='removed'){const L=sp.local().get(id);if(L&&stable(clean(L))===sy[id]){sp.apply(id,null);ch=true}delete sy[id];return}
+        const j=stable(o);if(sy[id]===j)return;sp.apply(id,o);sy[id]=j;ch=true;
+      });
+      if(ch){lsSet(SY_KEY,SY);saveLocal();scheduleRender()}
+    },e=>cloudError(e)));
+  });
+}
+// Зураг: тэмдэглэлд хавсаргасан зургийг тусдаа баримт болгож (base64) хадгална
+async function photoForCloud(b){
+  if(b.size>600000){try{const bm=await createImageBitmap(b);const k=Math.min(1,1280/Math.max(bm.width,bm.height));const c=document.createElement('canvas');
+    c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
+    b=await new Promise(r=>c.toBlob(r,'image/jpeg',.72))||b}catch(e){}}
+  return (await blobToDataURL(b)).split(',')[1];
+}
+async function syncPhotos(){
+  if(!fbUser||!fbReconciled||syncPhotos.busy)return;syncPhotos.busy=true;
+  try{const up=new Set(lsGet(UP_KEY)||[]);const used=new Set(D.notes.flatMap(n=>(n.photos||[]).map(p=>p.id)));
+    for(const id of used){if(up.has(id))continue;const b=await imgGet(id).catch(()=>null);if(!b)continue;
+      await fb.setDoc(docRef('photos',id),{d:await photoForCloud(b),t:'image/jpeg'});up.add(id);lsSet(UP_KEY,[...up])}
+    for(const id of [...up])if(!used.has(id)){await fb.deleteDoc(docRef('photos',id)).catch(()=>{});up.delete(id);lsSet(UP_KEY,[...up])}
+  }catch(e){cloudError(e)}finally{syncPhotos.busy=false}
+}
+async function cloudPhoto(id){
+  if(!fbUser||!fbDb)return null;
+  try{const s=await fb.getDoc(docRef('photos',id));if(!s.exists())return null;const x=s.data();
+    const blob=await (await fetch('data:'+(x.t||'image/jpeg')+';base64,'+x.d)).blob();await imgPut(id,blob);
+    const up=new Set(lsGet(UP_KEY)||[]);up.add(id);lsSet(UP_KEY,[...up]);return blob}catch(e){return null}
+}
+// ---- Нэвтрэлт ----
+function showAuth(on,msg,ok){$('#auth').classList.toggle('hidden',!on);if(msg!==undefined){$('#aMsg').textContent=msg;$('#aMsg').classList.toggle('ok',!!ok)}}
+async function cloudInit(){
+  const owner=lsGet(OWNER_KEY);
+  if(!owner)showAuth(true,'Ачаалж байна…',true);
+  try{
+    const mods=await Promise.race([Promise.all(['firebase-app.js','firebase-auth.js','firebase-firestore.js'].map(f=>import(FB_SDK+f))),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),15000))]);
+    mods.forEach(m=>Object.assign(fb,m));
+    const app=fb.initializeApp(FB_CFG);fbAuth=fb.getAuth(app);fbAuth.languageCode='mn';
+    try{fbDb=fb.initializeFirestore(app,{localCache:fb.persistentLocalCache({tabManager:fb.persistentMultipleTabManager()})})}catch(e){fbDb=fb.getFirestore(app)}
+    fbOK=true;if(!owner)showAuth(true,'');
+    fb.getRedirectResult(fbAuth).catch(e=>showAuth(true,authErr(e)));
+    fb.onAuthStateChanged(fbAuth,onUser);
+  }catch(e){
+    fbOK=false; // интернетгүй: өмнө нэвтэрсэн бол утсан дээрх хуулбараар үргэлжилнэ
+    if(!owner)showAuth(true,'Интернетэд холбогдож чадсангүй. Анх нэвтрэхэд интернет хэрэгтэй — холбогдоод дахин нээнэ үү.');
+  }
+}
+function onUser(u){
+  fbUser=u;
+  if(!u){cloudUnsub();fbReconciled=false;showAuth(true,'');return}
+  const owner=lsGet(OWNER_KEY);
+  if(owner&&owner!==u.uid)wipeLocal(); // өөр хүний мэдээллийг холихгүй
+  lsSet(OWNER_KEY,u.uid);
+  if(!D.settings.name&&u.displayName){D.settings.name=u.displayName.split(' ')[0];saveLocal()}
+  showAuth(false);cloudSubscribe();render();
+}
+function wipeLocal(){
+  D=JSON.parse(JSON.stringify(DEF));SY={};saveLocal();
+  [SY_KEY,UP_KEY,KEY+'.view'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+  IMGURL.forEach(u=>URL.revokeObjectURL(u));IMGURL.clear();idbDo('readwrite',s=>s.clear()).catch(()=>{});
+}
+function fbToggle(){fbSignUp=!fbSignUp;$('#aSubmit').textContent=fbSignUp?'Бүртгүүлэх':'Нэвтрэх';$('#aToggle').textContent=fbSignUp?'Бүртгэлтэй юу? Нэвтрэх':'Бүртгэл үүсгэх';
+  $('#aPass').autocomplete=fbSignUp?'new-password':'current-password';showAuth(true,'')}
+async function fbEmail(){
+  if(!fbOK)return location.reload();
+  const e=$('#aEmail').value.trim(),p=$('#aPass').value;if(!e||!p)return showAuth(true,'Имэйл, нууц үгээ бичнэ үү.');
+  $('#aSubmit').disabled=true;showAuth(true,'');
+  try{if(fbSignUp)await fb.createUserWithEmailAndPassword(fbAuth,e,p);else await fb.signInWithEmailAndPassword(fbAuth,e,p);$('#aPass').value=''}
+  catch(x){showAuth(true,authErr(x))}
+  $('#aSubmit').disabled=false;
+}
+async function fbGoogle(){
+  if(!fbOK)return location.reload();
+  const pr=new fb.GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
+  try{await fb.signInWithPopup(fbAuth,pr)}
+  catch(e){const c=(e&&e.code)||'';
+    if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-this-environment'){try{await fb.signInWithRedirect(fbAuth,pr)}catch(e2){showAuth(true,authErr(e2))}}
+    else if(!/cancelled-popup|popup-closed/.test(c))showAuth(true,authErr(e))}
+}
+async function fbReset(){
+  if(!fbOK)return;const e=$('#aEmail').value.trim();if(!e)return showAuth(true,'Эхлээд имэйлээ бичнэ үү.');
+  try{await fb.sendPasswordResetEmail(fbAuth,e);showAuth(true,'Нууц үг сэргээх холбоос имэйл рүү илгээгдлээ.',true)}catch(x){showAuth(true,authErr(x))}
+}
+function authErr(e){const c=(e&&e.code)||'';return ({'auth/invalid-email':'Имэйл буруу байна.','auth/user-not-found':'Ийм бүртгэл алга.','auth/wrong-password':'Нууц үг буруу.',
+  'auth/invalid-credential':'Имэйл эсвэл нууц үг буруу.','auth/email-already-in-use':'Энэ имэйлээр бүртгэл үүссэн байна — “Нэвтрэх” дарна уу.',
+  'auth/weak-password':'Нууц үг хамгийн багадаа 6 тэмдэгт.','auth/too-many-requests':'Олон удаа оролдлоо. Түр хүлээгээд дахин оролдоно уу.',
+  'auth/network-request-failed':'Интернет холболтоо шалгана уу.','auth/unauthorized-domain':'Энэ хаягаас нэвтрэх зөвшөөрөлгүй (Firebase → Authentication → Authorized domains).',
+  'auth/operation-not-allowed':'Энэ нэвтрэх арга Firebase дээр идэвхжээгүй байна.'})[c]||('Алдаа: '+((e&&e.message)||c))}
+async function logout(){
+  if(!fbUser)return;
+  if(!confirm('Гарах уу?\n\nМэдээлэл тань үүлэнд хадгалагдсан хэвээр, дахин нэвтрэхэд сэргэнэ. Энэ төхөөрөмж дээрх хуулбар устна.'))return;
+  closeSheet();closeDrawer();cloudPush();
+  const done=await Promise.race([fb.waitForPendingWrites(fbDb).then(()=>true).catch(()=>true),new Promise(r=>setTimeout(()=>r(false),6000))]);
+  if(!done&&!confirm('Сүүлийн өөрчлөлтүүд үүлэнд хараахан хүрээгүй байна (интернетээ шалгана уу). Тэгсэн ч гарах уу?'))return;
+  cloudUnsub();try{await fb.signOut(fbAuth)}catch(e){}
+  wipeLocal();try{localStorage.removeItem(OWNER_KEY)}catch(e){}
+  try{await fb.terminate(fbDb);await fb.clearIndexedDbPersistence(fbDb)}catch(e){}
+  location.reload();
+}
+window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
+
 /* ===================== Эхлүүлэх ===================== */
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.v==='life')UI.life='health';if(b.dataset.v==='plan')UI.planCat='all';setView(b.dataset.v)});
 try{const v=localStorage.getItem(KEY+'.view');if(v&&['home','today','plan','notes','money','life'].includes(v))VIEW=v}catch(e){}
@@ -1233,7 +1463,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeD
 let _lastDay=today();
 setInterval(()=>{checkReminders();if(today()!==_lastDay){_lastDay=today();if($('#sheet').classList.contains('hidden'))render()}},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();autoRoster();if($('#sheet').classList.contains('hidden'))render()}});
-render();checkReminders();autoRoster();setTimeout(gcImages,3000);
+render();checkReminders();autoRoster();setTimeout(gcImages,3000);cloudInit();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
