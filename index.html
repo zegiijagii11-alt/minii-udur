@@ -303,12 +303,14 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.6.1';
+const VERSION='1.6.2';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],contrastRooms:['CT','MRI'],reportRemind:'20:00'},notified:{}};
 const SHEET_LINK='https://docs.google.com/spreadsheets/d/1seWg1MBaKH9GCyZ6A-U-omfMONuJNxLg/edit';
 const shiftLink=()=>D.settings.shiftLink||SHEET_LINK;
+const RT_LINK='https://docs.google.com/spreadsheets/d/1Cydu4P2CNALnXbmuBVTrnzQDd-NcQgse_oOkfZKvgC0/edit?gid=41314390#gid=41314390';
+const rtLink=()=>D.settings.rtLink||RT_LINK;
 function load(){
   try{const x=JSON.parse(localStorage.getItem(KEY)||'null');const d=JSON.parse(JSON.stringify(DEF));
     if(x){Object.assign(d,x);d.settings=Object.assign({},DEF.settings,x.settings||{})}return d}
@@ -592,6 +594,7 @@ function groups(){
   return {
     ajil:{l:'Ажил',ic:'ajil',subs:[
       {k:'today',l:'Ажлын төлөвлөгөө',n:pend('ajil'),go:()=>goPlan('ajil')},
+      {k:'scan',l:'RT exam CT ↗',act:()=>window.open(rtLink(),'_blank')},
       {k:'link',l:'Ээлжийн хуваарь ↗',act:()=>window.open(shiftLink(),'_blank')},
       {k:'scan',l:'Тайлан',n:reportMissing(),go:()=>{UI.repDay=null;setView('report')}},
       {k:'clock',l:'Илүү цаг',go:()=>{UI.otMonth=null;setView('ot')}},
@@ -752,7 +755,7 @@ function vReport(){
     ${L.length?`<div style="overflow-x:auto"><table class="extab"><tr><th>Өдөр</th>${cols.map(([k,,s])=>`<th>${esc(k)}${s?`<br><small>${s}</small>`:''}</th>`).join('')}<th>Нийт</th></tr>
       ${L.slice().reverse().map(x=>`<tr onclick="UI.repDay='${x.date}';render();window.scrollTo(0,0)" class="${x.date===d?'on':''}"><td>${dayLabel(x.date)}${x.note?' 📝':''}</td>${cols.map(([k,mode])=>`<td>${rv((x.rooms||{})[k])[mode]||''}</td>`).join('')}<td><b>${repTotal(x)}</b></td></tr>`).join('')}
       <tr class="sum"><td>Нийт</td>${cols.map(c=>`<td>${colTot(c)}</td>`).join('')}<td>${all}</td></tr></table></div>`:'<div class="empty">Энэ сард тайлан бичээгүй байна. Дээрх + товчоор хүн бүрийг нэмээрэй.</div>'}
-    <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="repShare('${mo}')" ${L.length?'':'disabled'}>Нэгтгэл хуваалцах</button><button class="btn sm ghost" onclick="roomsForm()">Өрөөнүүд / сануулга</button></div></div>`;
+    <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="repShare('${mo}')" ${L.length?'':'disabled'}>Нэгтгэл хуваалцах</button><button class="btn sm" onclick="window.open(rtLink(),'_blank')">RT exam CT ↗</button><button class="btn sm ghost" onclick="roomsForm()">Өрөөнүүд / сануулга</button></div></div>`;
   return out;
 }
 function repEdit(d){const r=(repGet(d)||{}).rooms||{};
@@ -793,7 +796,7 @@ function openMenu(){
       ${row('today','Өнөөдөр',"setView('today')")}
       ${Object.entries(groups()).map(([k,g])=>row(g.ic,g.l,`openGroup('${k}')`,sumN(g))).join('')}
       <div class="dr-sec">Бусад</div>
-      ${row('search','Хайх','openSearch()')}${row('link','Ээлжийн хуваарь ↗',"window.open(shiftLink(),'_blank')")}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
+      ${row('search','Хайх','openSearch()')}${row('scan','RT exam CT ↗',"window.open(rtLink(),'_blank')")}${row('link','Ээлжийн хуваарь ↗',"window.open(shiftLink(),'_blank')")}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
     </div>`;
   $('#drawer').classList.remove('hidden');
 }
@@ -1454,6 +1457,7 @@ function openSettings(){
     <div class="fld"><label>Үсгийн хэмжээ</label><select id="sFs"><option value="15">Жижиг</option><option value="16">Дунд</option><option value="18">Том</option><option value="20">Маш том</option></select></div></div>
     <div class="fld"><label>Өдрийн усны зорилго (аяга)</label><input id="sWater" type="number" value="${s.waterGoal||8}"></div>
     <div class="fld"><label>Ээлжийн хуваарийн холбоос</label><input id="sShift" value="${esc(s.shiftLink||'')}" placeholder="${esc(SHEET_LINK)}"></div>
+    <div class="fld"><label>RT exam CT хүснэгтийн холбоос</label><input id="sRt" value="${esc(s.rtLink||'')}" placeholder="${esc(RT_LINK)}"></div>
     <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.':perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
       <div class="btns" style="margin-top:8px"><button class="btn sm" onclick="enableNotify()">${s.notify?'Дахин шалгах':'Асаах'}</button>${s.notify?'<button class="btn sm ghost" onclick="D.settings.notify=false;save();openSettings()">Унтраах</button>':''}</div></div>
     <div class="card"><h2>Бүртгэл</h2><div class="small">${fbUser?'<b style="color:var(--ok)">✓ Нэвтэрсэн</b> · '+esc(fbUser.email||fbUser.displayName||''):'Нэвтрээгүй'}<br>${syncLabel()}</div>
@@ -1464,7 +1468,7 @@ function openSettings(){
     <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
     <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}</div>`);
   $('#sTheme').value=s.theme;$('#sFs').value=String(s.fs||16);
-  $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';save();closeSheet();render()};
+  $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';s.rtLink=/^https?:\/\//.test($('#sRt').value.trim())?$('#sRt').value.trim():'';save();closeSheet();render()};
 }
 async function enableNotify(){
   if(!('Notification' in window)){toast('Энэ хөтөч сануулга дэмжихгүй');return}
@@ -1540,7 +1544,7 @@ const FB_CFG={apiKey:"AIzaSyDPa2MvJTEPPdFqcfrxJ9HDyyqJMEuShr0",authDomain:"epily
 const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
 const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot','reports'];
-const META_SET=['name','avatar','waterGoal','otRate','shiftLink','rooms','contrastRooms','reportRemind'];
+const META_SET=['name','avatar','waterGoal','otRate','shiftLink','rtLink','rooms','contrastRooms','reportRemind'];
 const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
