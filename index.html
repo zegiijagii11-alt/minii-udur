@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Миний өдөр</title>
+<meta name="description" content="Ажил, уулзалт, тэмдэглэл, санхүү, эрүүл мэнд, ахуй — нэг дор">
+<meta name="theme-color" content="#5b8c7b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fffdf9; --text:#2f302c; --muted:#85837a; --line:#ebe7de;
+  --pri:#5b8c7b; --pri-soft:#e7f0ec; --ok:#6a9e78; --ok-soft:#e9f3ec; --warn:#b98a45; --warn-soft:#f7efe2;
+  --bad:#bf6b63; --bad-soft:#f7e8e6; --work:#6787ab; --me:#9483ad; --fam:#bb7d88;
+  --shadow:none; --fab-shadow:0 4px 14px rgba(60,80,70,.18);
+  --on-pri:#ffffff; --fs:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1e1d; --card:#252826; --text:#e4e1d9; --muted:#9a978e; --line:#323532;
+    --pri:#8bb8a8; --pri-soft:#2c3a35; --ok:#8fbf9b; --ok-soft:#2a3a2e; --warn:#d4b07a; --warn-soft:#3a3226;
+    --bad:#d99189; --bad-soft:#3d2c2a; --work:#8fa9c7; --me:#b2a3c8; --fam:#d4a0a9;
+    --fab-shadow:none; --on-pri:#1c1e1d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1e1d; --card:#252826; --text:#e4e1d9; --muted:#9a978e; --line:#323532;
+  --pri:#8bb8a8; --pri-soft:#2c3a35; --ok:#8fbf9b; --ok-soft:#2a3a2e; --warn:#d4b07a; --warn-soft:#3a3226;
+  --bad:#d99189; --bad-soft:#3d2c2a; --work:#8fa9c7; --me:#b2a3c8; --fam:#d4a0a9;
+  --fab-shadow:none; --on-pri:#1c1e1d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:var(--fs)}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-offset:-1px}
+.hidden{display:none!important}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 10px 10px;background:var(--card);border-bottom:1px solid var(--line);margin-bottom:14px}
+.top h1{flex:1;min-width:0;margin:0 0 0 6px;font-size:1.3rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbtn{position:relative;border:0;background:none;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:var(--text)}
+.hbtn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hbtn b{position:absolute;top:4px;right:2px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:var(--bad);color:#fff;font-size:.68rem;line-height:20px;text-align:center}
+.hello{font-size:1.15rem;font-weight:600}
+.sub{color:var(--muted);font-size:.88rem}
+.iconbtn{border:0;background:var(--card);width:42px;height:42px;border-radius:12px;box-shadow:var(--shadow);font-size:1.1rem}
+main{padding:0 16px 72px;max-width:720px;margin:0 auto}
+.lnk{font-size:.88rem;font-weight:500;color:var(--pri);border:0;background:none;padding:4px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin:0 0 14px;border:1px solid var(--line)}
+.card h2{font-size:.95rem;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:.01em}
+.card h2 .sp{flex:1}
+.card h2 .lnk{font-size:.85rem;font-weight:500;color:var(--pri);border:0;background:none;padding:4px}
+.empty{color:var(--muted);font-size:.9rem;padding:4px 0}
+.homehead{margin:0 2px 14px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0 0 14px}
+.tile{position:relative;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:30px 8px 22px;display:flex;flex-direction:column;align-items:center;gap:18px;font-size:1rem;color:var(--muted);min-width:0;transition:transform .1s}
+.tile:active{transform:scale(.97)}
+.tile svg{width:60px;height:60px;fill:none;stroke:var(--pri);stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.tile svg .f{fill:color-mix(in srgb,var(--pri) 16%,transparent)}
+.tile.wide{grid-column:1/-1}
+.tiles.sub .tile{padding:22px 10px 18px;gap:12px;font-size:.92rem;color:var(--text)}
+.tiles.sub .tile svg{width:46px;height:46px}
+.tiles.sub .tile span{line-height:1.25;text-align:center}
+.tile .badge{position:absolute;top:12px;right:12px;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:var(--pri);color:var(--on-pri);font-size:.75rem;font-weight:700;line-height:24px;text-align:center;font-style:normal}
+.ph{display:block;border:0;padding:0;background:var(--line);border-radius:12px;overflow:hidden;cursor:zoom-in}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph.missing{background:var(--bad-soft)}
+.phedit{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:start;margin-bottom:10px}
+.phedit .ph{width:88px;height:88px}
+.nthumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:-4px -4px 10px;position:relative}
+.nthumbs .ph{aspect-ratio:1;border-radius:9px;cursor:pointer}
+.nthumbs .ph:only-child{grid-column:1/-1;aspect-ratio:16/10}
+.nthumbs .more{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.55);color:#fff;font-size:.75rem;padding:2px 7px;border-radius:99px}
+.lightbox{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px}
+.lightbox img{max-width:100%;max-height:80vh;border-radius:8px;object-fit:contain}
+.lbcap{color:#eee;text-align:center;max-width:640px;white-space:pre-wrap}
+.lbx{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;border:0;background:rgba(255,255,255,.15);color:#fff;width:42px;height:42px;border-radius:50%;font-size:1.1rem}
+.drawer{position:fixed;inset:0;z-index:15}
+.drawer-bg{position:absolute;inset:0;background:rgba(20,22,20,.45)}
+.drawer-body{position:absolute;left:0;top:0;bottom:0;width:min(80vw,330px);background:var(--bg);overflow:auto;animation:slin .2s ease-out;padding-bottom:env(safe-area-inset-bottom)}
+@keyframes slin{from{transform:translateX(-100%)}to{transform:none}}
+.dr-head{background:var(--card);padding:calc(22px + env(safe-area-inset-top)) 20px 22px;text-align:center;border-bottom:1px solid var(--line)}
+.dr-app{text-align:left;color:var(--pri);font-size:1.05rem;margin-bottom:22px}
+.avatar{width:112px;height:112px;border-radius:50%;border:4px solid var(--card);box-shadow:0 0 0 1px var(--line),0 4px 14px rgba(0,0,0,.08);background:var(--pri-soft);color:var(--pri);font-size:2.6rem;font-weight:600;overflow:hidden;padding:0;display:inline-grid;place-items:center}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.dr-name{margin-top:12px;font-size:1.15rem;letter-spacing:.04em}
+.dr-list{padding:6px 18px 20px}
+.dr-sec{color:var(--muted);font-size:.95rem;margin:18px 0 4px}
+.drawer .menu-row{border-bottom:0;padding:12px 2px}
+.drawer .menu-row svg{width:26px;height:26px;margin-right:14px}
+.menu-row{display:flex;align-items:center;gap:14px;width:100%;border:0;background:none;padding:13px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:1rem}
+.menu-row svg{width:24px;height:24px;fill:none;stroke:var(--pri);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.quickbar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px;color:var(--muted);box-shadow:var(--shadow);width:100%;text-align:left}
+.quickbar b{color:var(--pri);font-size:1.2rem}
+.row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .main{flex:1;min-width:0;cursor:pointer}
+.row .ttl{overflow-wrap:anywhere}
+.row .meta{color:var(--muted);font-size:.8rem;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.done .ttl{text-decoration:line-through;color:var(--muted)}
+.tm{font-variant-numeric:tabular-nums;font-weight:600;min-width:48px;color:var(--pri)}
+.cb{appearance:none;-webkit-appearance:none;width:24px;height:24px;min-width:24px;border:2px solid var(--line);border-color:color-mix(in srgb,var(--muted) 55%,transparent);border-radius:50%;padding:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+.cb:checked{background:var(--ok);border-color:var(--ok)}
+.cb:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.tag{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--pri-soft);color:var(--pri)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.seg{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:2px;scrollbar-width:none}
+.seg button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;white-space:nowrap;font-size:.9rem}
+.seg button.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.week{display:grid;grid-template-columns:auto repeat(7,1fr) auto;gap:4px;align-items:center;margin-bottom:12px}
+.week .nav{border:0;background:none;font-size:1.2rem;padding:6px;color:var(--muted)}
+.day{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;text-align:center;font-size:.75rem;color:var(--muted)}
+.day b{display:block;font-size:1.05rem;color:var(--text)}
+.day.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.day.on b{color:var(--on-pri)}
+.day.today{border-color:var(--pri)}
+.day i{display:block;height:6px;font-style:normal;line-height:6px;font-size:.6rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:12px;padding:10px;min-width:0}
+.stat small{color:var(--muted);display:block;font-size:.75rem}
+.stat b{font-size:1rem;overflow-wrap:anywhere}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar>span{display:block;height:100%;background:var(--pri);border-radius:99px}
+.bar.over>span{background:var(--bad)}
+.catrow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:6px 0;font-size:.9rem}
+.catrow .bar{grid-column:1/-1;margin-top:0;height:6px}
+.amt{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.amt.in{color:var(--ok)} .amt.out{color:var(--text)}
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;box-shadow:var(--shadow);min-width:0}
+.note h3{margin:0 0 6px;font-size:.95rem;overflow-wrap:anywhere}
+.note p{margin:0;color:var(--muted);font-size:.85rem;white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.note .tags{margin-top:8px;display:flex;gap:4px;flex-wrap:wrap}
+.moods{display:flex;gap:6px;justify-content:space-between;margin-bottom:10px}
+.moods button{flex:1;border:1px solid var(--line);background:var(--bg);border-radius:12px;font-size:1.5rem;padding:6px 0}
+.moods button.on{border-color:var(--pri);background:var(--pri-soft)}
+.water{display:flex;gap:6px;flex-wrap:wrap}
+.water button{border:1px solid var(--line);background:var(--bg);border-radius:10px;width:38px;height:44px;font-size:1.2rem;opacity:.35}
+.water button.on{opacity:1;border-color:var(--pri)}
+.hgrid{display:flex;gap:4px}
+.hgrid span{width:22px;height:22px;border-radius:6px;background:var(--line);display:grid;place-items:center;font-size:.6rem;color:var(--muted)}
+.hgrid span.on{background:var(--ok);color:#fff}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;font-weight:600}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.btn.danger{color:var(--bad)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;font-size:.85rem;border-radius:10px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.row-btns{display:flex;gap:8px;align-items:center;margin-top:14px}
+.row-btns .sp{flex:1}
+.fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--pri);color:var(--on-pri);font-size:1.8rem;box-shadow:var(--fab-shadow);z-index:6}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:7;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+.tabs button{position:relative;border:0;background:none;display:flex;justify-content:center;align-items:center;color:var(--muted);padding:8px 0}
+.tabs svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{color:var(--pri)}
+.tabs button.on::before{content:"";position:absolute;top:-8px;left:18%;right:18%;height:3px;border-radius:0 0 3px 3px;background:var(--pri)}
+.iconbtn{border:1px solid var(--line)!important;background:var(--card)!important;color:var(--muted)}
+.iconbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet-bg{position:absolute;inset:0;background:rgba(10,10,30,.45)}
+.sheet-body{position:relative;background:var(--card);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+.sheet-body h3{margin:0 0 12px}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}
+.fld2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex!important;align-items:center;gap:8px;font-size:.95rem!important;color:var(--text)!important}
+.chk input{width:auto}
+.qprev{margin:10px 0;padding:12px;border-radius:12px;background:var(--pri-soft);min-height:46px;font-size:.92rem}
+.qprev .k{font-weight:700}
+.hint{color:var(--muted);font-size:.8rem;line-height:1.5}
+.hint code{background:var(--bg);padding:1px 6px;border-radius:6px;font-family:inherit}
+.manual{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.manual button{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 4px;font-size:.85rem}
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--card);padding:10px 16px;border-radius:12px;font-size:.9rem;opacity:0;transition:.2s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.inline-add{display:flex;gap:8px;margin-bottom:6px}
+.inline-add input{flex:1}
+details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
+.small{font-size:.8rem;color:var(--muted)}
+.big{font-size:1.6rem;font-weight:700}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="hbtn" id="navBtn" onclick="openMenu()" aria-label="Цэс"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <h1 id="title">Миний өдөр</h1>
+  <button class="hbtn" onclick="openBell()" aria-label="Сануулга"><svg viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><b id="bellN" class="hidden"></b></button>
+</header>
+<main id="view"></main>
+<button class="fab" onclick="openQuick()" aria-label="Нэмэх">＋</button>
+<nav class="tabs" id="tabs">
+  <button data-v="home" aria-label="Нүүр"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg></button>
+  <button data-v="today" aria-label="Өнөөдөр"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  <button data-v="plan" aria-label="Төлөвлөгөө"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
+  <button data-v="money" aria-label="Санхүү"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/></svg></button>
+  <button data-v="life" aria-label="Эрүүл & Ахуй"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
+</nav>
+<div id="drawer" class="drawer hidden"><div class="drawer-bg" onclick="closeDrawer()"></div><aside class="drawer-body" id="drawerBody"></aside></div>
+<input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="setAvatar(event)">
+<input type="file" id="camIn" accept="image/*" capture="environment" class="hidden" onchange="addPhotos(event)">
+<input type="file" id="galIn" accept="image/*" multiple class="hidden" onchange="addPhotos(event)">
+<div id="lightbox" class="lightbox hidden" onclick="this.classList.add('hidden')"></div>
+<div id="sheet" class="sheet hidden"><div class="sheet-bg" onclick="closeSheet()"></div><div class="sheet-body" id="sheetBody"></div></div>
+<input type="file" id="restoreInput" accept=".txt,.json,text/plain,application/json" class="hidden" onchange="importBackup(event)">
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===================== Өгөгдөл ===================== */
+const VERSION='1.0.0';
+const KEY='miniiudur.v1';
+const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
+  settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,sheetUrl:'',sheetKey:'',sheetName:'',sheetRemind:60,sheetLast:0},sheetPeople:[],notified:{}};
+function load(){
+  try{const x=JSON.parse(localStorage.getItem(KEY)||'null');const d=JSON.parse(JSON.stringify(DEF));
+    if(x){Object.assign(d,x);d.settings=Object.assign({},DEF.settings,x.settings||{})}return d}
+  catch(e){return JSON.parse(JSON.stringify(DEF))}
+}
+let D=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('⚠️ Хадгалж чадсангүй')}}
+
+/* ===================== Туслах функцүүд ===================== */
+// PARSER-START
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseD=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+let _now=null; // тест хийхэд
+const now=()=>_now?new Date(_now):new Date();
+const today=()=>ymd(now());
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return ymd(d)};
+const diffDays=(a,b)=>Math.round((parseD(b)-parseD(a))/864e5);
+const WD=['Ням','Даваа','Мягмар','Лхагва','Пүрэв','Баасан','Бямба'];
+const WD_RE={'даваа':1,'мягмар':2,'лхагва':3,'пүрэв':4,'баасан':5,'бямба':6,'ням':0};
+const CATS={ajil:{l:'Ажил',c:'var(--work)'},huviin:{l:'Хувийн',c:'var(--me)'},ger:{l:'Гэр бүл',c:'var(--fam)'},eruul:{l:'Эрүүл мэнд',c:'var(--ok)'}};
+const APPT={doctor:{l:'Эмчид үзүүлэх',i:'🩺'},lab:{l:'Шинжилгээ өгөх',i:'🧪'},hospital:{l:'Эмнэлэг / процедур',i:'🏥'},dental:{l:'Шүдний эмч',i:'🦷'},vaccine:{l:'Вакцин, тариа',i:'💉'},other:{l:'Бусад',i:'📋'}};
+const HEALTH_RE=/эмчид|эмч(\s|ийн|тэй)|үзлэг|үзүүлэх|шинжилгээ|эмнэлэг|шүдний|вакцин|тариа/;
+function apptKind(L){return /шинжилгээ|цус|шээс/.test(L)?'lab':/шүд/.test(L)?'dental':/вакцин|тариа/.test(L)?'vaccine':/эмнэлэг|хэвтэх|рентген|хэт авиа|мри|mri|эхо|процедур/.test(L)?'hospital':'doctor'}
+const EXP_CATS=[
+  ['Хоол','🍜',/хоол|кофе|ресторан|цай|бууз|хуушуур|пицца|кафе|үдийн|оройн хоол|зууш/],
+  ['Хүнс','🛒',/хүнс|дэлгүүр|талх|сүү|мах|ногоо|жимс|супермаркет|эмарт|номин|сангийн/],
+  ['Унаа','🚕',/такси|бензин|автобус|унаа|шатахуун|машин|зогсоол|убкаб/],
+  ['Төлбөр','🧾',/түрээс|цахилгаан|дулаан|интернет|утасны|нэгж|сөх|төлбөр|зээл|ус төлбөр/],
+  ['Эрүүл мэнд','💊',/(^|\s)эм(\s|$)|эмнэлэг|шинжилгээ|үзлэг|эмийн|шүд/],
+  ['Хувцас','👕',/хувцас|гутал|цамц|өмд|куртик/],
+  ['Гэр бүл','👨‍👩‍👧',/хүүхэд|сургууль|цэцэрлэг|бэлэг|ээж|аав|эхнэр|нөхөр/],
+  ['Зугаа','🎬',/кино|тоглоом|аялал|концерт|спорт|фитнес/],
+  ['Бусад','📦',/$^/]];
+const INC_CATS=['Цалин','Бонус','Нэмэлт орлого','Бусад орлого'];
+const guessExp=t=>{for(const c of EXP_CATS)if(c[2].test(t))return c[0];return 'Бусад'};
+const catIcon=c=>(EXP_CATS.find(x=>x[0]===c)||['', INC_CATS.includes(c)?'💵':'📦'])[1];
+const FAM_RE=/гэр бүл|(^|\s)(ээж|аав|эхнэр|нөхөр|охин|хүүхэд|эгч|дүү|өвөө|эмээ|хадам)|(^|\s)хүү(\s|г|т|д|$)|(^|\s)ах(\s|т|ынх)|төрсөн өдөр/;
+const WORK_RE=/ажил|хурал|оффис|тайлан|үйлчлүүлэгч|захирал|төсөл|имэйл|и-мэйл|гэрээ|танилцуулга|менежер|баг(\s|ийн)|ярилцлага/;
+const EVENT_RE=/уулзалт|уулзах|хурал|төрсөн өдөр|үзлэг|эмчид|шинжилгээ|эмнэлэг|вакцин|зоог|найр|ярилцлага|сургалт|тэмцээн|баяр|хурим/;
+const INCOME_RE=/цалин|орлого|бонус|урамшуулал|ирсэн|олсон|буцаалт/;
+
+function parseQuick(raw){
+  const src=(raw||'').trim();
+  if(!src) return null;
+  let m;
+  if(m=src.match(/^(тэмдэглэл|санаа|т)\s*[:：]\s*([\s\S]*)$/i)){
+    const body=m[2].trim();
+    return {kind:'note',title:body.split('\n')[0].slice(0,60),body,tags:(body.match(/#[^\s#]+/g)||[]).map(t=>t.slice(1))};
+  }
+  if(m=src.match(/^(авах|дэлгүүр|худалдаж авах)\s*[:：]\s*([\s\S]*)$/i)){
+    return {kind:'shop',list:m[2].split(/[,;\n]/).map(x=>x.trim()).filter(Boolean)};
+  }
+  let s=' '+src+' ';
+  const low=()=>s.toLowerCase();
+  const t0=today();
+  let date=null,time=null;
+  const cut=re=>{s=s.replace(re,' ')};
+  // Огноо
+  if(m=low().match(/\s(өнөөдөр|өнөө)(\s|$)/)){date=t0;cut(new RegExp('\\s'+m[1]+'(?=\\s)','i'))}
+  else if(m=low().match(/\s(маргааш)\S*/)){date=addDays(t0,1);cut(/\sмаргааш\S*/i)}
+  else if(m=low().match(/\s(нөгөөдөр)\S*/)){date=addDays(t0,2);cut(/\sнөгөөдөр\S*/i)}
+  else if(m=low().match(/\s(өчигдөр)\S*/)){date=addDays(t0,-1);cut(/\sөчигдөр\S*/i)}
+  if(!date && (m=low().match(/\s(ирэх\s+)?(даваа|мягмар|лхагва|пүрэв|баасан|бямба|ням)(\s*гар[иа]г\S*|-?н?д|т)(?=\s)/))){
+    const idx=WD_RE[m[2]];let d=(idx-now().getDay()+7)%7;if(d===0&&m[1])d=7;
+    date=addDays(t0,d);s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length);
+  }
+  if(!date && (m=low().match(/\s(\d{1,2})\s*(?:сарын|сар)\s*(\d{1,2})(?:-?н[ыи]|-?нд|-?д|-?т|\S*)?(?=\s)/))){
+    date=mkDate(+m[1],+m[2]);if(date)s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length);
+  }
+  if(!date && (m=low().match(/\s(\d{1,2})[./](\d{1,2})(?:-?нд|-?д|-?т)?(?=\s)/))){
+    date=mkDate(+m[1],+m[2]);if(date)s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length);
+  }
+  // Цаг
+  let h=null,mi=0;
+  if(m=low().match(/\s(\d{1,2})[:](\d{2})(?:-?д|-?т|-?аас|-?оос)?(?=\s)/)){h=+m[1];mi=+m[2];s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length)}
+  else if(m=low().match(/\s(\d{1,2})\s*(?:цаг(?:т|аас|ийн)?|-д|-т|д|т)(?=\s)/)){h=+m[1];s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length)}
+  if(h!==null && h<=23 && mi<=59){
+    const L=low();
+    if(/орой|үдээс хойш|шөнө/.test(L) && h<12) h+=12;
+    else if(!/өглөө/.test(L) && h>=1 && h<=6) h+=12;
+    time=pad(h)+':'+pad(mi);
+    cut(/\s(өглөө|орой|үдээс хойш)(?=\s)/i);
+    if(!date) date=t0;
+  }
+  // Мөнгө
+  const L=low();
+  let amount=null,income=false;
+  if(!time && (m=L.match(/\s(\+)?(\d[\d,']*(?:\.\d+)?)\s*(к|k|мянга|мянган|сая|₮|төг\S*)?(?=\s)/))){
+    let n=parseFloat(m[2].replace(/[,']/g,''));const suf=m[3]||'';
+    if(/^(к|k|мянга|мянган)$/.test(suf))n*=1000; else if(suf==='сая')n*=1e6;
+    if((suf||n>=100) && !EVENT_RE.test(L)){amount=Math.round(n);income=!!m[1]||/^\s*\+/.test(L)||INCOME_RE.test(L);s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length)}
+  }
+  const title=s.replace(/\s+/g,' ').replace(/^[\s,.\-–:+]+|[\s,.\-–:]+$/g,'').trim();
+  if(amount!==null){
+    return {kind:'tx',type:income?'in':'out',amount,note:title,cat:income?'Цалин':guessExp(L),date:date||t0};
+  }
+  if(HEALTH_RE.test(L)&&!/төрсөн өдөр/.test(L)){
+    const k=apptKind(L);
+    return {kind:'item',type:'event',appt:k,title:title||src,date:date||'',time:time||'',cat:'eruul',repeat:'',remind:k==='lab'?'eve':1440,remind2:60};
+  }
+  const cat=FAM_RE.test(L)?'ger':WORK_RE.test(L)?'ajil':'huviin';
+  const isEvent=!!time||EVENT_RE.test(L);
+  let repeat='';
+  if(/төрсөн өдөр/.test(L)) repeat='year';
+  return {kind:'item',type:isEvent?'event':'task',title:title||src,date:date||'',time:time||'',cat,repeat,remind:isEvent?15:0};
+}
+function mkDate(mo,da){
+  if(mo<1||mo>12||da<1||da>31)return null;
+  const n=now();let y=n.getFullYear();
+  let d=new Date(y,mo-1,da);if(d.getMonth()!==mo-1)return null;
+  if(diffDays(ymd(d),today())>60)d=new Date(y+1,mo-1,da);
+  return ymd(d);
+}
+// PARSER-END
+const $=q=>document.querySelector(q);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>Math.round(n||0).toLocaleString('en-US')+'₮';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const toMin=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const ym=s=>s.slice(0,7);
+function dayLabel(s){
+  if(!s)return '';const t=today();
+  if(s===t)return 'Өнөөдөр';if(s===addDays(t,1))return 'Маргааш';if(s===addDays(t,-1))return 'Өчигдөр';
+  const d=parseD(s);return (d.getMonth()+1)+'/'+d.getDate()+' '+WD[d.getDay()];
+}
+function longDate(s){const d=parseD(s);return d.getFullYear()+' оны '+(d.getMonth()+1)+' сарын '+d.getDate()+', '+WD[d.getDay()]+' гараг'}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* ===================== Ажил / уулзалт логик ===================== */
+function occurs(i,day){
+  if(!i.date||day<i.date)return false;
+  switch(i.repeat){
+    case 'day':return true;
+    case 'week':return diffDays(i.date,day)%7===0;
+    case 'month':return day.slice(8)===i.date.slice(8);
+    case 'year':return day.slice(5)===i.date.slice(5);
+    default:return day===i.date;
+  }
+}
+const isDone=(i,day)=>i.repeat?(i.doneDates||[]).includes(day):!!i.done;
+function toggleItem(id,day){
+  const i=D.items.find(x=>x.id===id);if(!i)return;
+  if(i.repeat){i.doneDates=i.doneDates||[];const k=i.doneDates.indexOf(day);k>=0?i.doneDates.splice(k,1):i.doneDates.push(day);
+    i.doneDates=i.doneDates.filter(x=>x>=addDays(today(),-400))}
+  else{i.done=!i.done;i.doneAt=i.done?today():null}
+  save();render();
+}
+const byTime=(a,b)=>(a.time||'99').localeCompare(b.time||'99');
+const isOverdue=i=>i.type!=='event'&&!i.repeat&&!i.done&&!!i.date&&i.date<today();
+function itemRow(i,day,opts={}){
+  const done=isDone(i,day);const c=CATS[i.cat]||CATS.huviin;
+  const overdue=!done&&isOverdue(i);
+  const meta=[`<span class="dot" style="background:${c.c}"></span>${c.l}`];
+  if(opts.showDate&&i.date)meta.push(dayLabel(i.date));
+  if(i.end)meta.push('дуусах '+i.end);
+  if(i.source==='sheet')meta.push('хуваариас');
+  else if(i.appt){meta.push((APPT[i.appt]||APPT.other).l);if(i.place)meta.push(esc(i.place))}
+  else if(i.type==='event')meta.push('уулзалт');
+  if(i.repeat)meta.push('↻ давтагдана');
+  if(overdue)meta.push('<span class="tag bad">хоцорсон</span>');
+  if(i.note)meta.push('📎');
+  return `<div class="row ${done?'done':''}">
+    <input type="checkbox" class="cb" ${done?'checked':''} onchange="toggleItem('${i.id}','${day}')" aria-label="Дууссан">
+    ${i.time?`<span class="tm">${i.time}</span>`:''}
+    <div class="main" onclick="itemForm('${i.id}')"><div class="ttl">${i.appt?(APPT[i.appt]||APPT.other).i+' ':''}${esc(i.title)}</div><div class="meta">${meta.join(' · ')}</div></div>
+  </div>`;
+}
+
+/* ===================== Харагдац ===================== */
+let VIEW='home';
+const VIEW_TITLES={home:'Миний өдөр',today:'Өнөөдөр',plan:'Төлөвлөгөө',notes:'Тэмдэглэл',money:'Санхүү',life:'Эрүүл & Ахуй'};
+const UI={planDay:null,planWeek:null,planCat:'all',noteQ:'',noteTag:'',month:null,life:'health'};
+function setView(v){VIEW=v;UI.back=null;UI.sec=null;try{localStorage.setItem(KEY+'.view',v)}catch(e){}render();window.scrollTo(0,0)}
+function render(){
+  document.documentElement.style.setProperty('--fs',(D.settings.fs||16)+'px');
+  const th=D.settings.theme;if(th==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=th;
+  if(VIEW==='grp'&&!groups()[UI.grp])VIEW='home';
+  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='shifts'?'Ээлжийн хуваарь':VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
+  const inGrp=VIEW==='grp'||!!UI.back;
+  $('#navBtn').innerHTML=`<svg viewBox="0 0 24 24">${inGrp?TILE_ICONS.back:'<path d="M4 7h16M4 12h16M4 17h16"/>'}</svg>`;
+  $('#navBtn').setAttribute('aria-label',inGrp?'Буцах':'Цэс');
+  $('#navBtn').onclick=inGrp?(UI.back?goBack:()=>setView('home')):openMenu;
+  const bn=bellItems().length;$('#bellN').textContent=bn>99?'99+':bn;$('#bellN').classList.toggle('hidden',!bn);
+  const navOn=VIEW==='grp'||UI.back?'home':VIEW;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===navOn));
+  $('#view').innerHTML=({home:vHome,grp:vGroup,shifts:vShifts,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
+  hydrateImgs($('#view'));
+  if(VIEW==='notes'){const q=$('#noteQ');if(q&&UI._focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+}
+
+/* ---------- Нүүрний цэс ---------- */
+const TILE_ICONS={
+  ajil:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 13h18"/>',
+  huviin:'<circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5c0-4 3.4-6 7.5-6s7.5 2 7.5 6"/>',
+  ger:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9.5" r="2.3"/><path d="M3 20c0-3.4 2.7-5.5 6-5.5s6 2.1 6 5.5M15.5 14.6c3 0 5.5 1.6 5.5 4.9"/>',
+  notes:'<path d="M6 3.5h9l4 4V20a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 6 20z"/><path d="M9 11h7M9 15h5"/>',
+  money:'<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/>',
+  health:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M8 11.5h2l1-2 2 4 1-2h2"/>',
+  habits:'<path d="M12 20.5v-8"/><path d="M12 12.5c0-4 3-7 8-7 0 5-3 7-8 7zM12 14.5c0-3-2-5.5-7-5.5 0 4 2 5.5 7 5.5z"/>',
+  home:'<path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/>',
+  today:'<rect class="f" x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/>',
+  appt:'<path d="M6 3.5v5a4 4 0 0 0 8 0v-5"/><path d="M10 12.5v2.5a5 5 0 0 0 10 0v-2"/><circle class="f" cx="20" cy="11" r="2"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  roster:'<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5v11M15 9.5v11M3.5 15h17"/>',
+  settings:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  backup:'<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/>'};
+// Ажил/хувийн/гэр бүл/эрүүл мэндийн хавтангийн дүрсийг бага зэрэг дүүргэлттэй болгоно
+TILE_ICONS.ajil=TILE_ICONS.ajil.replace('<rect ','<rect class="f" ');TILE_ICONS.notes=TILE_ICONS.notes.replace('<path ','<path class="f" ');
+TILE_ICONS.money=TILE_ICONS.money.replace('<rect ','<rect class="f" ');TILE_ICONS.health=TILE_ICONS.health.replace('<path ','<path class="f" ');
+TILE_ICONS.huviin=TILE_ICONS.huviin.replace('<circle ','<circle class="f" ');TILE_ICONS.home=TILE_ICONS.home.replace('<path d="M5.5','<path class="f" d="M5.5');
+Object.assign(TILE_ICONS,{
+  pill:'<rect class="f" x="2.8" y="8.8" width="18.4" height="6.4" rx="3.2" transform="rotate(-40 12 12)"/><path d="M9.6 9.2l4.8 5.6"/>',
+  chart:'<path d="M4 4v16h16"/><path d="M7.5 15l3.5-4 3 3 5-6.5"/>',
+  drop:'<path class="f" d="M12 3.5s6 6.4 6 10.9a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5z"/>',
+  receipt:'<path class="f" d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12.5h6"/>',
+  target:'<circle cx="12" cy="12" r="8.5"/><circle class="f" cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".6"/>',
+  minus:'<circle class="f" cx="12" cy="12" r="8.5"/><path d="M8 12h8"/>',
+  plus:'<circle class="f" cx="12" cy="12" r="8.5"/><path d="M8 12h8M12 8v8"/>',
+  cart:'<path d="M3 4.5h2.2l2.2 10.3h10.2L20 7.5H6.3"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
+  broom:'<path d="M15 3l-3.5 8.5"/><path class="f" d="M7.5 11.5h8l1.8 8.5H5.7z"/><path d="M9.5 15.5l-.5 4.5M13.5 15.5l.5 4.5"/>',
+  link:'<path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  camera:'<path class="f" d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3l1.5-2h5.4l1.5 2h2.3A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/>'});
+// Нүүрний 5 бүлэг → дотор нь ангиллууд. go: очих газар, sec: зөвхөн тухайн хэсгийг харуулах, act: маягт нээх
+function groups(){
+  const t=today();
+  const pend=c=>D.items.filter(i=>i.cat===c&&((occurs(i,t)&&!isDone(i,t))||isOverdue(i))).length;
+  const upA=D.items.filter(i=>i.appt&&!i.done&&i.date>=t&&diffDays(t,i.date)<=7).length;
+  const medLeft=D.meds.reduce((a,m)=>a+(m.times||[]).filter(x=>!(D.medLog[t]||{})[m.id+'@'+x]).length,0);
+  const shifts=D.items.filter(i=>i.source==='sheet'&&i.date>=t&&diffDays(t,i.date)<=1&&i.time).length;
+  const shop=D.shopping.filter(x=>!x.done).length,chores=D.chores.filter(c=>choreDays(c)<=0).length,hab=D.habits.filter(h=>!(D.habitLog[t]||{})[h.id]).length;
+  return {
+    ajil:{l:'Ажил',ic:'ajil',subs:[
+      {k:'today',l:'Ажлын төлөвлөгөө',n:pend('ajil'),go:()=>goPlan('ajil')},
+      {k:'roster',l:'Ээлжийн хуваарь',n:shifts,go:()=>setView('shifts')},
+      {k:'plus',l:'Ажил / уулзалт нэмэх',act:()=>itemForm(null,{cat:'ajil',date:today()})},
+      {k:'link',l:'Хуваарийн хүснэгт',act:()=>window.open(SHEET_LINK,'_blank')}]},
+    huviin:{l:'Хувийн',ic:'huviin',subs:[
+      {k:'huviin',l:'Хувийн ажил',n:pend('huviin'),go:()=>goPlan('huviin')},
+      {k:'ger',l:'Гэр бүл',n:pend('ger'),go:()=>goPlan('ger')},
+      {k:'plus',l:'Хувийн ажил нэмэх',act:()=>itemForm(null,{cat:'huviin'})},
+      {k:'plus',l:'Гэр бүлийн ажил нэмэх',act:()=>itemForm(null,{cat:'ger'})}]},
+    health:{l:'Эрүүл мэнд',ic:'health',subs:[
+      {k:'appt',l:'Эмчийн цаг, шинжилгээ',n:upA,go:()=>goLife('health'),sec:'appt'},
+      {k:'pill',l:'Эм',n:medLeft,go:()=>goLife('health'),sec:'meds'},
+      {k:'chart',l:'Хэмжилт',go:()=>goLife('health'),sec:'meas'},
+      {k:'drop',l:'Ус',go:()=>goLife('health'),sec:'water'}]},
+    money:{l:'Санхүү',ic:'money',subs:[
+      {k:'money',l:'Орлого, зарлага',go:()=>setView('money')},
+      {k:'receipt',l:'Тогтмол төлбөр',n:billsDue(3).length,go:()=>setView('money'),sec:'bills'},
+      {k:'minus',l:'Зарлага нэмэх',act:()=>txForm(null,'out')},
+      {k:'plus',l:'Орлого нэмэх',act:()=>txForm(null,'in')},
+      {k:'target',l:'Сарын төсөв',act:()=>budgetForm()}]},
+    notes:{l:'Тэмдэглэл',ic:'notes',subs:[
+      {k:'notes',l:'Тэмдэглэл',go:()=>setView('notes')},
+      {k:'habits',l:'Зуршил',n:hab,go:()=>goLife('habits')},
+      {k:'cart',l:'Худалдан авах',n:shop,go:()=>goLife('home'),sec:'shop'},
+      {k:'broom',l:'Гэрийн ажил',n:chores,go:()=>goLife('home'),sec:'chores'},
+      {k:'camera',l:'Зураг авах',act:()=>quickPhoto()},
+      {k:'plus',l:'Тэмдэглэл бичих',act:()=>noteForm(null)}]}};
+}
+const sumN=g=>g.subs.reduce((a,s)=>a+(s.n||0),0);
+const badge=n=>n?`<b class="badge">${n>99?'99+':n}</b>`:'';
+function vHome(){
+  const h=now().getHours();
+  const greet=h<5?'Сайхан амраарай':h<12?'Өглөөний мэнд':h<18?'Өдрийн мэнд':'Оройн мэнд';
+  const G=groups();
+  return `<div class="homehead"><div class="hello">${greet}${D.settings.name?', '+esc(D.settings.name):''}</div><div class="sub">${longDate(today())}</div></div>
+    <div class="tiles">${Object.entries(G).map(([k,g],idx,arr)=>`<button class="tile${idx===arr.length-1&&arr.length%2?' wide':''}" onclick="openGroup('${k}')"><svg viewBox="0 0 24 24">${TILE_ICONS[g.ic]}</svg>${badge(sumN(g))}<span>${g.l}</span></button>`).join('')}</div>`+homeTodo();
+}
+// Нүүрний доод хэсэг: өнөөдөр хийх ажлын жагсаалт
+function homeTodo(){
+  const t=today();
+  const overdue=D.items.filter(i=>isOverdue(i)).sort((a,b)=>a.date.localeCompare(b.date));
+  const list=D.items.filter(i=>occurs(i,t)).sort((a,b)=>(isDone(a,t)-isDone(b,t))||byTime(a,b));
+  const left=list.filter(i=>!isDone(i,t)).length+overdue.length;
+  const rows=[...overdue.map(i=>itemRow(i,i.date,{showDate:true})),...list.map(i=>itemRow(i,t))];
+  return `<div class="card"><h2>Өнөөдөр хийх${left?` <span class="tag">${left}</span>`:''}<span class="sp"></span><button class="lnk" onclick="itemForm(null,{date:today()})">+ нэмэх</button></h2>
+    ${rows.length?rows.join(''):'<div class="empty">Өнөөдөр хийх ажил алга. ＋ дарж нэмээрэй.</div>'}
+    ${rows.length?`<div class="row-btns" style="margin-top:8px"><span class="sp"></span><button class="lnk" onclick="setView('today')">Өдрийн бүх хуваарь →</button></div>`:''}</div>`;
+}
+function openGroup(k){UI.grp=k;setView('grp')}
+function vGroup(){
+  const g=groups()[UI.grp];if(!g)return vHome();
+  return `<div class="tiles sub">${g.subs.map((s,i)=>`<button class="tile" onclick="openSub(${i})"><svg viewBox="0 0 24 24">${TILE_ICONS[s.k]}</svg>${badge(s.n)}<span>${s.l}</span></button>`).join('')}</div>`;
+}
+function openSub(i){
+  const g=groups()[UI.grp],s=g&&g.subs[i];if(!s)return;
+  if(s.act)return s.act();
+  s.go();UI.back=UI.grp;UI.sec=s.sec||null;UI.subTitle=s.l;render();window.scrollTo(0,0);
+}
+function goBack(){const g=UI.back;UI.grp=g;setView('grp')}
+function goPlan(cat){UI.planCat=cat;UI.planDay=today();UI.planWeek=weekStart(today());setView('plan')}
+function goLife(sub){UI.life=sub;setView('life')}
+// Ээлжийн хуваарь (Google Sheet-ээс орсон)
+function vShifts(){
+  const t=today();const L=D.items.filter(i=>i.source==='sheet'&&i.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,45);
+  let out=`<div class="btns" style="margin-bottom:12px"><button class="btn sm" onclick="openRoster()">${D.settings.sheetName?'Тохиргоо / шинэчлэх':'Хуваарь холбох'}</button><button class="btn sm ghost" onclick="window.open(SHEET_LINK,'_blank')">Хүснэгт нээх ↗</button></div>`;
+  if(!D.settings.sheetName)return out+`<div class="card empty">Google Sheet дэх ээлжийн хуваарийг холбовол таны ээлжүүд энд, төлөвлөгөөнд автоматаар орж, ээлж эхлэхээс өмнө сануулна.</div>`;
+  return out+`<div class="card">${L.length?L.map(i=>`<div class="row"><div style="min-width:86px"><b>${dayLabel(i.date)}</b></div><div class="main" onclick="itemForm('${i.id}')"><div class="ttl">${esc(i.title)}</div><div class="meta">${i.time?i.time+(i.end?' – '+i.end:''):'бүтэн өдөр'}</div></div></div>`).join(''):'<div class="empty">Цаашдын ээлж алга.</div>'}</div>
+    <div class="small" style="text-align:center">${esc(D.settings.sheetName)} · шинэчилсэн ${D.settings.sheetLast?new Date(D.settings.sheetLast).toLocaleString('mn-MN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}</div>`;
+}
+
+/* ---------- Хажуугийн цэс, хонх ---------- */
+function openMenu(){
+  const s=D.settings;const ini=(s.name||'?').trim().slice(0,1).toUpperCase();
+  const row=(k,l,fn,n)=>`<button class="menu-row" onclick="closeDrawer();${fn}"><svg viewBox="0 0 24 24">${TILE_ICONS[k]}</svg><span style="flex:1">${l}</span>${n?`<span class="tag">${n}</span>`:''}</button>`;
+  $('#drawerBody').innerHTML=`<div class="dr-head"><div class="dr-app">Миний өдөр, v${VERSION}</div>
+      <button class="avatar" onclick="$('#avatarInput').click()" aria-label="Профайл зураг солих">${s.avatar?`<img src="${s.avatar}" alt="">`:`<span>${esc(ini)}</span>`}</button>
+      <div class="dr-name">${esc((s.name||'Нэрээ оруулах').toUpperCase())}</div></div>
+    <div class="dr-list"><div class="dr-sec">Үндсэн цэс</div>
+      ${row('grid','Нүүр',"setView('home')")}
+      ${row('today','Өнөөдөр',"setView('today')")}
+      ${Object.entries(groups()).map(([k,g])=>row(g.ic,g.l,`openGroup('${k}')`,sumN(g))).join('')}
+      <div class="dr-sec">Бусад</div>
+      ${row('search','Хайх','openSearch()')}${row('roster','Ажлын хуваарь холбох','openRoster()')}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}
+    </div>`;
+  $('#drawer').classList.remove('hidden');
+}
+TILE_ICONS.grid='<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>';
+function closeDrawer(){$('#drawer').classList.add('hidden')}
+function setAvatar(ev){
+  const f=ev.target.files[0];ev.target.value='';if(!f)return;
+  const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=256;const k=Math.min(img.width,img.height);
+    c.getContext('2d').drawImage(img,(img.width-k)/2,(img.height-k)/2,k,k,0,0,256,256);URL.revokeObjectURL(img.src);
+    D.settings.avatar=c.toDataURL('image/jpeg',.85);save();openMenu();toast('Зураг солигдлоо')};
+  img.src=URL.createObjectURL(f);
+}
+// Хонх: ойрын сануулгууд
+function bellItems(){
+  const n=now(),t=today(),tm=addDays(t,1),mins=n.getHours()*60+n.getMinutes(),out=[];
+  D.items.forEach(i=>{if(!i.time)return;[t,tm].forEach(day=>{if(!occurs(i,day)||isDone(i,day))return;if(day===t&&toMin(i.time)<mins-30)return;
+    out.push({at:day+' '+i.time,ic:i.appt?(APPT[i.appt]||APPT.other).i:i.source==='sheet'?'💼':'📅',t:i.title,s:dayLabel(day)+' '+i.time+(i.place?' · '+i.place:''),fn:`itemForm('${i.id}')`})})});
+  D.meds.forEach(m=>(m.times||[]).forEach(x=>{if(!(D.medLog[t]||{})[m.id+'@'+x])out.push({at:t+' '+x,ic:'💊',t:m.name,s:'Өнөөдөр '+x+(toMin(x)<mins?' · уугаагүй':''),fn:"goLife('health')"})}));
+  D.items.filter(i=>i.appt&&!i.done&&i.date>tm&&diffDays(t,i.date)<=7).forEach(i=>out.push({at:i.date+' '+(i.time||''),ic:(APPT[i.appt]||APPT.other).i,t:i.title,s:dayLabel(i.date)+(i.time?' '+i.time:''),fn:`itemForm('${i.id}')`}));
+  billsDue(3).forEach(b=>out.push({at:t+' 00',ic:'🧾',t:b.name+' — '+money(b.amount),s:b.days<0?(-b.days)+' хоног хэтэрсэн':b.days===0?'Өнөөдөр төлөх':b.days+' хоногийн дараа',fn:"setView('money')"}));
+  return out.sort((a,b)=>a.at.localeCompare(b.at));
+}
+function openBell(){
+  const L=bellItems();
+  openSheet(`<h3>Сануулгууд</h3>${L.length?L.map(x=>`<div class="row" style="cursor:pointer" onclick="closeSheet();${x.fn}"><span style="font-size:1.3rem">${x.ic}</span><div class="main"><div class="ttl">${esc(x.t)}</div><div class="meta">${esc(x.s)}</div></div></div>`).join(''):'<div class="empty">Ойрын хугацаанд сануулах зүйл алга.</div>'}
+    ${D.settings.notify?'':'<div class="row-btns"><span class="small" style="flex:1">Утсанд сануулга ирүүлэх үү?</span><button class="btn sm primary" onclick="closeSheet();enableNotify()">Асаах</button></div>'}`);
+}
+
+/* ---------- Өнөөдөр ---------- */
+function vToday(){
+  const t=today();
+  const timed=D.items.filter(i=>i.time&&occurs(i,t)).sort(byTime);
+  const tasks=D.items.filter(i=>!i.time&&occurs(i,t));
+  const overdue=D.items.filter(i=>isOverdue(i)).sort((a,b)=>a.date.localeCompare(b.date));
+  const undated=D.items.filter(i=>!i.date&&!i.done);
+  const tomorrow=D.items.filter(i=>occurs(i,addDays(t,1))).sort(byTime);
+  let out=`<button class="quickbar" onclick="openQuick()"><b>＋</b> Юу хийх вэ? “маргааш 10-д уулзалт”, “хоол 12000”…</button>`;
+
+  const allTasks=[...overdue,...tasks];
+  if(!timed.length&&!allTasks.length){
+    out+=`<div class="card"><h2>Өнөөдөр</h2><div class="empty">Төлөвлөсөн зүйл алга — чөлөөтэй өдөр.</div>${undated.length?`<details><summary>Хугацаагүй ажил (${undated.length})</summary>${undated.map(i=>itemRow(i,t)).join('')}</details>`:''}</div>`;
+  } else {
+    if(timed.length)out+=`<div class="card"><h2>Хуваарь<span class="sp"></span><button class="lnk" onclick="itemForm(null,{type:'event',date:today()})">+ нэмэх</button></h2>${timed.map(i=>itemRow(i,t)).join('')}</div>`;
+    out+=`<div class="card"><h2>Хийх ажил<span class="sp"></span><button class="lnk" onclick="itemForm(null,{date:today()})">+ нэмэх</button></h2>`;
+    out+=allTasks.length?allTasks.map(i=>itemRow(i,occurs(i,t)?t:i.date,{showDate:i.date!==t})).join(''):`<div class="empty">Өнөөдөрт ажил алга.</div>`;
+    if(undated.length)out+=`<details><summary>Хугацаагүй ажил (${undated.length})</summary>${undated.map(i=>itemRow(i,t)).join('')}</details>`;
+    out+=`</div>`;
+  }
+
+  // Эм
+  if(D.meds.length){
+    const log=D.medLog[t]||{};const doses=[];
+    D.meds.forEach(m=>(m.times||[]).forEach(tm=>doses.push({m,tm})));doses.sort((a,b)=>a.tm.localeCompare(b.tm));
+    const taken=doses.filter(x=>log[x.m.id+'@'+x.tm]).length;
+    out+=`<div class="card"><h2>Эм<span class="sp"></span><span class="tag ${taken===doses.length?'ok':''}">${taken}/${doses.length}</span></h2>`+
+      doses.map(x=>{const k=x.m.id+'@'+x.tm;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}')"><span class="tm">${x.tm}</span><div class="main"><div class="ttl">${esc(x.m.name)}</div>${x.m.dose?`<div class="meta">${esc(x.m.dose)}</div>`:''}</div></div>`}).join('')+`</div>`;
+  }
+  // Зуршил + ус
+  if(D.habits.length){
+    const log=D.habitLog[t]||{};
+    out+=`<div class="card"><h2>Зуршил<span class="sp"></span><span class="tag">${D.habits.filter(x=>log[x.id]).length}/${D.habits.length}</span></h2>`+
+      D.habits.map(x=>`<div class="row ${log[x.id]?'done':''}"><input type="checkbox" class="cb" ${log[x.id]?'checked':''} onchange="toggleHabit('${x.id}')"><div class="main"><div class="ttl">${esc(x.icon||'')} ${esc(x.name)}</div><div class="meta">🔥 ${streak(x.id)} өдөр дараалан</div></div></div>`).join('')+`</div>`;
+  }
+
+  // Санхүү
+  const spent=D.tx.filter(x=>x.date===t&&x.type==='out').reduce((a,x)=>a+x.amount,0);
+  const mSpent=D.tx.filter(x=>ym(x.date)===ym(t)&&x.type==='out').reduce((a,x)=>a+x.amount,0);
+  const due=billsDue(5);
+  if(spent||due.length)out+=`<div class="card"><h2>Мөнгө<span class="sp"></span><button class="lnk" onclick="txForm(null,'out')">+ зарлага</button></h2>
+    <div class="stats"><div class="stat"><small>Өнөөдөр</small><b>${money(spent)}</b></div><div class="stat"><small>Энэ сар</small><b>${money(mSpent)}</b></div>
+    <div class="stat"><small>Төсөв үлдсэн</small><b>${D.budget?money(D.budget-mSpent):'—'}</b></div></div>
+    ${due.map(b=>`<div class="row"><div class="main" onclick="setView('money')"><div class="ttl">🧾 ${esc(b.name)} — ${money(b.amount)}</div><div class="meta">${b.days===0?'<span class="tag bad">өнөөдөр төлөх</span>':b.days<0?`<span class="tag bad">${-b.days} хоног хэтэрсэн</span>`:`<span class="tag warn">${b.days} хоногийн дараа</span>`}</div></div><button class="btn sm" onclick="payBill('${b.id}')">Төлсөн</button></div>`).join('')}
+  </div>`;
+
+  // Ахуй
+  const shopLeft=D.shopping.filter(x=>!x.done).length;
+  const choresDue=D.chores.filter(c=>choreDays(c)<=0);
+  if(shopLeft||choresDue.length){
+    out+=`<div class="card"><h2>Ахуй</h2>${shopLeft?`<div class="row"><div class="main" onclick="UI.life='home';setView('life')"><div class="ttl">🛒 Худалдан авах ${shopLeft} зүйл</div><div class="meta">${esc(D.shopping.filter(x=>!x.done).slice(0,4).map(x=>x.text).join(', '))}</div></div></div>`:''}
+    ${choresDue.map(c=>`<div class="row"><div class="main"><div class="ttl">🧹 ${esc(c.name)}</div><div class="meta">${choreLabel(c)}</div></div><button class="btn sm" onclick="doChore('${c.id}')">Хийсэн</button></div>`).join('')}</div>`;
+  }
+
+  if(tomorrow.length){
+    out+=`<div class="card"><h2>Маргааш</h2>${tomorrow.map(i=>itemRow(i,addDays(t,1))).join('')}</div>`;
+  }
+  if(now().getHours()>=17||D.journal[t])out+=journalCard(t);
+  out+=weekCard();
+  return out;
+}
+function journalCard(t){
+  const j=D.journal[t]||{};const moods=['😞','🙁','😐','🙂','😄'];
+  return `<div class="card"><h2>Оройн 2 минут</h2>
+    <div class="small" style="margin-bottom:6px">Өнөөдөр ямар байв?</div>
+    <div class="moods">${moods.map((e,k)=>`<button class="${j.mood===k+1?'on':''}" onclick="setJ('mood',${k+1})">${e}</button>`).join('')}</div>
+    <div class="fld"><label>Өнөөдөр юу сайн болсон бэ?</label><textarea rows="2" onchange="setJ('good',this.value)">${esc(j.good||'')}</textarea></div>
+    <div class="fld"><label>Маргаашийн хамгийн чухал 1 ажил</label><input value="${esc(j.top||'')}" onchange="setJ('top',this.value)" placeholder="Жишээ: тайлангаа дуусгах"></div>
+  </div>`;
+}
+function setJ(k,v){const t=today();D.journal[t]=D.journal[t]||{};D.journal[t][k]=v;
+  if(k==='top'&&v.trim()){const tm=addDays(t,1);if(!D.items.some(i=>i.fromJournal===t)){D.items.push({id:uid(),type:'task',title:v.trim(),cat:'huviin',date:tm,time:'',remind:0,repeat:'',note:'',fromJournal:t,created:Date.now()})}
+    else{const i=D.items.find(i=>i.fromJournal===t);i.title=v.trim()}}
+  save();if(k==='mood')render();else toast('Хадгаллаа')}
+function weekCard(){
+  const t=today();const days=[...Array(7)].map((_,k)=>addDays(t,-k));
+  const doneN=D.items.filter(i=>!i.repeat&&i.done&&i.doneAt&&days.includes(i.doneAt)).length+D.items.reduce((a,i)=>a+(i.doneDates||[]).filter(d=>days.includes(d)).length,0);
+  const spent=D.tx.filter(x=>x.type==='out'&&days.includes(x.date)).reduce((a,x)=>a+x.amount,0);
+  const moods=days.map(d=>D.journal[d]&&D.journal[d].mood).filter(Boolean);
+  const hab=D.habits.length?Math.round(100*days.reduce((a,d)=>a+D.habits.filter(h=>(D.habitLog[d]||{})[h.id]).length,0)/(7*D.habits.length)):null;
+  const moodE=moods.length?['😞','🙁','😐','🙂','😄'][Math.round(moods.reduce((a,b)=>a+b,0)/moods.length)-1]:'—';
+  return `<details class="card"><summary>Сүүлийн 7 хоногийн тойм</summary><div class="stats" style="margin-top:8px">
+    <div class="stat"><small>Дууссан ажил</small><b>${doneN}</b></div>
+    <div class="stat"><small>Зарлага</small><b>${money(spent)}</b></div>
+    <div class="stat"><small>${hab!==null?'Зуршил':'Сэтгэл санаа'}</small><b>${hab!==null?hab+'%':moodE}</b></div></div>
+    ${hab!==null&&moods.length?`<div class="small" style="margin-top:8px">Дундаж сэтгэл санаа: ${moodE}</div>`:''}</details>`;
+}
+
+/* ---------- Төлөвлөгөө ---------- */
+function weekStart(s){const d=parseD(s);const k=(d.getDay()+6)%7;return addDays(s,-k)}
+function vPlan(){
+  const t=today();UI.planDay=UI.planDay||t;UI.planWeek=UI.planWeek||weekStart(UI.planDay);
+  const f=i=>UI.planCat==='all'||i.cat===UI.planCat;
+  const items=D.items.filter(f);
+  let out=`<div class="seg">${[['all','Бүгд'],['ajil','Ажил'],['huviin','Хувийн'],['ger','Гэр бүл'],['eruul','Эрүүл мэнд']].map(([k,l])=>`<button class="${UI.planCat===k?'on':''}" onclick="UI.planCat='${k}';render()">${l}</button>`).join('')}<button onclick="openRoster()">${D.settings.sheetName?'Ажлын хуваарь ✓':'+ Ажлын хуваарь холбох'}</button><button onclick="window.open(SHEET_LINK,'_blank')">Хүснэгт ↗</button></div>`;
+  out+=`<div class="week"><button class="nav" onclick="UI.planWeek=addDays(UI.planWeek,-7);render()">‹</button>`;
+  for(let k=0;k<7;k++){const d=addDays(UI.planWeek,k);const n=items.filter(i=>occurs(i,d)&&!isDone(i,d)).length;const dd=parseD(d);
+    out+=`<button class="day ${d===UI.planDay?'on':''} ${d===t?'today':''}" onclick="UI.planDay='${d}';render()">${WD[dd.getDay()].slice(0,2)}<b>${dd.getDate()}</b><i>${n?'•'.repeat(Math.min(n,3)):''}</i></button>`}
+  out+=`<button class="nav" onclick="UI.planWeek=addDays(UI.planWeek,7);render()">›</button></div>`;
+  const day=UI.planDay;
+  const list=items.filter(i=>occurs(i,day)).sort(byTime);
+  out+=`<div class="card"><h2>${dayLabel(day)}${day!==t?` <span class="small">${longDate(day)}</span>`:''}<span class="sp"></span>${day!==t?`<button class="lnk" onclick="UI.planDay=today();UI.planWeek=weekStart(today());render()">Өнөөдөр</button>`:''}<button class="lnk" onclick="itemForm(null,{date:'${day}'})">+ нэмэх</button></h2>`;
+  out+=list.length?list.map(i=>itemRow(i,day)).join(''):`<div class="empty">Энэ өдөр юу ч төлөвлөөгүй байна.</div>`;
+  out+=`</div>`;
+  const overdue=items.filter(i=>isOverdue(i));
+  if(overdue.length)out+=`<div class="card"><h2>Хоцорсон</h2>${overdue.map(i=>itemRow(i,i.date,{showDate:true})).join('')}</div>`;
+  const upcoming=items.filter(i=>!i.repeat&&!i.done&&i.date>addDays(UI.planWeek,6)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,10);
+  if(upcoming.length)out+=`<div class="card"><h2>Цаашид</h2>${upcoming.map(i=>itemRow(i,i.date,{showDate:true})).join('')}</div>`;
+  const undated=items.filter(i=>!i.date&&!i.done);
+  out+=`<div class="card"><h2>Хугацаагүй ажил<span class="sp"></span><button class="lnk" onclick="itemForm(null,{})">+ нэмэх</button></h2>${undated.length?undated.map(i=>itemRow(i,t)).join(''):'<div class="empty">Алга.</div>'}</div>`;
+  const rep=items.filter(i=>i.repeat);
+  if(rep.length)out+=`<details class="card"><summary>Давтагддаг (${rep.length})</summary>${rep.map(i=>`<div class="row"><div class="main" onclick="itemForm('${i.id}')"><div class="ttl">${esc(i.title)}</div><div class="meta">${({day:'Өдөр бүр',week:'7 хоног бүр',month:'Сар бүр',year:'Жил бүр'})[i.repeat]} · ${dayLabel(i.date)}${i.time?' '+i.time:''}</div></div></div>`).join('')}</details>`;
+  const done=items.filter(i=>!i.repeat&&i.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
+  if(done.length)out+=`<details class="card"><summary>Дууссан (${done.length})</summary>${done.slice(0,30).map(i=>itemRow(i,i.date||t,{showDate:true})).join('')}${done.length>5?`<div class="row-btns"><button class="btn sm danger" onclick="clearDone()">Дууссаныг цэвэрлэх</button></div>`:''}</details>`;
+  return out;
+}
+function clearDone(){if(!confirm('Дууссан бүх ажлыг устгах уу?'))return;D.items=D.items.filter(i=>i.repeat||!i.done);save();render()}
+
+/* ---------- Тэмдэглэл ---------- */
+function vNotes(){
+  const q=UI.noteQ.toLowerCase();
+  const tags=[...new Set(D.notes.flatMap(n=>n.tags||[]))].sort();
+  const list=D.notes.filter(n=>(!UI.noteTag||(n.tags||[]).includes(UI.noteTag))&&(!q||(n.title+' '+n.body+' '+(n.tags||[]).join(' ')).toLowerCase().includes(q)))
+    .sort((a,b)=>(b.pinned-a.pinned)||(b.updated-a.updated));
+  let out=`<div class="inline-add"><input id="noteQ" placeholder="🔍 Тэмдэглэл хайх" value="${esc(UI.noteQ)}" oninput="UI.noteQ=this.value;UI._focusQ=true;render()"><button class="btn" onclick="quickPhoto()" aria-label="Зураг авах">📷</button><button class="btn primary" onclick="noteForm(null)">＋</button></div>`;
+  if(tags.length)out+=`<div class="seg"><button class="${!UI.noteTag?'on':''}" onclick="UI.noteTag='';UI._focusQ=false;render()">Бүгд</button>${tags.map(t=>`<button class="${UI.noteTag===t?'on':''}" onclick="UI.noteTag='${esc(t).replace(/'/g,'')}';UI._focusQ=false;render()">#${esc(t)}</button>`).join('')}</div>`;
+  out+=list.length?`<div class="notes">${list.map(n=>`<div class="note" onclick="noteForm('${n.id}')">${(n.photos||[]).length?`<div class="nthumbs">${n.photos.slice(0,3).map(p=>`<span class="ph"><img data-img="${p.id}" alt=""></span>`).join('')}${n.photos.length>3?`<span class="more">+${n.photos.length-3}</span>`:''}</div>`:''}<h3>${n.pinned?'📌 ':''}${esc(n.title||'Гарчиггүй')}</h3><p>${esc(n.body)}</p><div class="tags">${(n.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}<span class="small">${dayLabel(ymd(new Date(n.updated)))}</span></div></div>`).join('')}</div>`
+    :`<div class="card empty">${D.notes.length?'Олдсонгүй.':'Тэмдэглэл алга. ＋ дарж эхлээрэй. Хурдан нэмэхэд <b>тэмдэглэл: …</b> гэж бичиж болно.'}</div>`;
+  return out;
+}
+
+/* ---------- Санхүү ---------- */
+function vMoney(){
+  const mo=UI.month||ym(today());
+  const [y,m]=mo.split('-').map(Number);
+  const tx=D.tx.filter(x=>ym(x.date)===mo);
+  const inc=tx.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0);
+  const out_=tx.filter(x=>x.type==='out').reduce((a,x)=>a+x.amount,0);
+  const shift=k=>{const d=new Date(y,m-1+k,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+  if(UI.sec==='bills')return billsCard(mo);
+  let out=`<div class="card"><h2><button class="lnk" onclick="UI.month='${shift(-1)}';render()">‹</button><span style="flex:1;text-align:center">${y} оны ${m} сар</span><button class="lnk" onclick="UI.month='${shift(1)}';render()">›</button></h2>
+    <div class="stats"><div class="stat"><small>Орлого</small><b class="amt in">${money(inc)}</b></div><div class="stat"><small>Зарлага</small><b>${money(out_)}</b></div><div class="stat"><small>Үлдэгдэл</small><b style="color:${inc-out_<0?'var(--bad)':'var(--ok)'}">${money(inc-out_)}</b></div></div>`;
+  if(D.budget){const p=Math.min(100,Math.round(100*out_/D.budget));out+=`<div class="small" style="margin-top:10px">Сарын төсөв ${money(D.budget)} — ${p}% зарцуулсан</div><div class="bar ${out_>D.budget?'over':''}"><span style="width:${p}%"></span></div>`}
+  out+=`<div class="btns" style="margin-top:12px"><button class="btn primary" onclick="txForm(null,'out')">− Зарлага</button><button class="btn" onclick="txForm(null,'in')">＋ Орлого</button><button class="btn ghost" onclick="budgetForm()">🎯 Төсөв</button></div></div>`;
+  // Ангилал
+  const byCat={};tx.filter(x=>x.type==='out').forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+x.amount);
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  if(cats.length)out+=`<div class="card"><h2>Юунд зарцуулсан</h2>${cats.map(([c,v])=>`<div class="catrow"><span>${catIcon(c)} ${esc(c)}</span><span class="amt">${money(v)}</span><div class="bar"><span style="width:${Math.round(100*v/cats[0][1])}%"></span></div></div>`).join('')}</div>`;
+  if(UI.sec==='budget')return out;
+  out+=billsCard(mo);
+  // Гүйлгээ
+  const groups={};tx.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created).forEach(x=>(groups[x.date]=groups[x.date]||[]).push(x));
+  out+=`<div class="card"><h2>Гүйлгээ</h2>`;
+  out+=Object.keys(groups).length?Object.entries(groups).map(([d,arr])=>`<div class="small" style="margin:10px 0 2px">${dayLabel(d)}</div>`+arr.map(x=>`<div class="row" onclick="txForm('${x.id}')" style="cursor:pointer"><span style="font-size:1.2rem">${catIcon(x.cat)}</span><div class="main"><div class="ttl">${esc(x.note||x.cat)}</div><div class="meta">${esc(x.cat)}</div></div><span class="amt ${x.type}">${x.type==='in'?'+':'−'}${money(x.amount)}</span></div>`).join('')).join('')
+    :`<div class="empty">Энэ сард гүйлгээ алга. Хурдан нэмэхэд “хоол 12000” гэж бичээд л болно.</div>`;
+  out+=`</div>`;
+  return out;
+}
+function billsCard(mo){
+  let out=`<div class="card"><h2>Тогтмол төлбөр<span class="sp"></span><button class="lnk" onclick="billForm(null)">+ нэмэх</button></h2>`;
+  out+=D.bills.length?D.bills.slice().sort((a,b)=>a.day-b.day).map(b=>{const paid=(b.paid||[]).includes(mo);
+    return `<div class="row ${paid?'done':''}"><input type="checkbox" class="cb" ${paid?'checked':''} onchange="payBill('${b.id}','${mo}')"><div class="main" onclick="billForm('${b.id}')"><div class="ttl">${esc(b.name)}</div><div class="meta">Сар бүрийн ${b.day}-нд</div></div><span class="amt">${money(b.amount)}</span></div>`}).join('')
+    :`<div class="empty">Түрээс, интернет, зээл гэх мэт сар бүр төлдөг зүйлсээ нэмбэл хугацаа нь ойртоход сануулна.</div>`;
+  return out+`</div>`;
+}
+function billsDue(within){
+  const t=today();const n=now();const mo=ym(t);
+  return D.bills.filter(b=>!(b.paid||[]).includes(mo)).map(b=>{const last=new Date(n.getFullYear(),n.getMonth()+1,0).getDate();const dd=ymd(new Date(n.getFullYear(),n.getMonth(),Math.min(b.day,last)));return Object.assign({},b,{days:diffDays(t,dd)})}).filter(b=>b.days<=within).sort((a,b)=>a.days-b.days);
+}
+function payBill(id,mo){
+  mo=mo||ym(today());const b=D.bills.find(x=>x.id===id);if(!b)return;b.paid=b.paid||[];
+  const k=b.paid.indexOf(mo);
+  if(k>=0){b.paid.splice(k,1);D.tx=D.tx.filter(x=>x.billId!==b.id+mo)}
+  else{b.paid.push(mo);
+    const d=mo===ym(today())?today():mo+'-'+pad(Math.min(b.day,28));
+    D.tx.push({id:uid(),type:'out',amount:b.amount,cat:b.cat||'Төлбөр',note:b.name,date:d,billId:b.id+mo,created:Date.now()});toast('Төлсөн гэж тэмдэглээд зарлагад нэмлээ')}
+  save();render();
+}
+
+/* ---------- Эрүүл мэнд & Ахуй ---------- */
+const MEAS={weight:{l:'Жин',u:'кг',i:'⚖️'},bp:{l:'Даралт',u:'',i:'🩺'},sugar:{l:'Сахар',u:'ммоль/л',i:'🩸'},sleep:{l:'Нойр',u:'цаг',i:'😴'},pulse:{l:'Зүрхний цохилт',u:'/мин',i:'❤️'},steps:{l:'Алхалт',u:'алхам',i:'🚶'}};
+function vLife(){
+  let out='';const S=s=>!UI.sec||UI.sec===s;
+  if(UI.life==='health'){
+    const t=today();const ap=D.items.filter(i=>i.appt);
+    const up=ap.filter(i=>!i.done&&i.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+    const pastA=ap.filter(i=>i.done||i.date<t).sort((a,b)=>b.date.localeCompare(a.date));
+    if(S('appt')){
+    out+=`<div class="card"><h2>Эмчийн цаг, шинжилгээ<span class="sp"></span><button class="lnk" onclick="apptForm(null)">+ нэмэх</button></h2>`;
+    out+=up.length?up.map(i=>{const d=diffDays(t,i.date);const R=x=>x==null||x===''?'':x==='eve'?'өмнөх орой':x>=1440?'1 өдөр өмнө':x>=60?(x/60)+' цаг өмнө':x>0?x+' мин өмнө':'цагт нь';
+      const rem=[R(i.remind),R(i.remind2)].filter(Boolean);
+      return `<div class="row"><span style="font-size:1.3rem">${(APPT[i.appt]||APPT.other).i}</span><div class="main" onclick="apptForm('${i.id}')"><div class="ttl">${esc(i.title)}</div>
+        <div class="meta">${dayLabel(i.date)}${i.time?' '+i.time:''}${i.place?' · '+esc(i.place):''}${d>=2?` · <span class="tag">${d} хоног үлдсэн</span>`:''}</div>
+        ${i.prep?`<div class="meta">Бэлтгэл: ${esc(i.prep)}</div>`:''}<div class="meta">${rem.length&&i.time?'🔔 '+rem.join(', '):'🔕 сануулгагүй'}</div></div>
+        <input type="checkbox" class="cb" onchange="toggleItem('${i.id}','${i.date}')" aria-label="Очсон"></div>`}).join('')
+      :`<div class="empty">Эмчид үзүүлэх, шинжилгээ өгөх, эмнэлэгт очих цагаа нэмбэл өмнөх өдөр болон цаг болохоос өмнө сануулна. Хурдан нэмэхэд “12/05 10-д дотрын эмчид үзүүлэх” гэж бичиж болно.</div>`;
+    if(pastA.length)out+=`<details><summary>Өмнөх үзлэгүүд (${pastA.length})</summary>${pastA.slice(0,30).map(i=>`<div class="row" style="cursor:pointer" onclick="apptForm('${i.id}')"><span>${(APPT[i.appt]||APPT.other).i}</span><div class="main"><div class="ttl">${esc(i.title)}</div><div class="meta">${dayLabel(i.date)}${i.place?' · '+esc(i.place):''}</div>${i.result?`<div class="meta">📄 ${esc(i.result.slice(0,80))}</div>`:'<div class="meta">+ үр дүн бичих</div>'}</div></div>`).join('')}</details>`;
+    out+=`</div>`;}
+    if(S('meds')){
+    out+=`<div class="card"><h2>Эм<span class="sp"></span><button class="lnk" onclick="medForm(null)">+ нэмэх</button></h2>`;
+    out+=D.meds.length?D.meds.map(m=>`<div class="row"><div class="main" onclick="medForm('${m.id}')"><div class="ttl">${esc(m.name)}${m.dose?` <span class="small">${esc(m.dose)}</span>`:''}</div><div class="meta">⏰ ${(m.times||[]).join(', ')||'цаггүй'} · ${medStreak(m)} өдөр бүрэн</div></div></div>`).join('')
+      :`<div class="empty">Тогтмол уудаг эмээ нэмбэл цагт нь сануулж, өнөөдрийн хуудсанд гарна.</div>`;
+    out+=`</div>`;}
+    if(S('water'))out+=waterCard();
+    if(S('meas')){
+    out+=`<div class="card"><h2>Хэмжилт<span class="sp"></span><button class="lnk" onclick="measForm(null)">+ нэмэх</button></h2><div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">`;
+    out+=Object.entries(MEAS).map(([k,v])=>{const last=D.health.filter(h=>h.type===k).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)[0];
+      return `<button class="stat" style="border:0;text-align:left" onclick="measForm(null,'${k}')"><small>${v.i} ${v.l}</small><b>${last?measVal(last):'—'}</b>${last?`<small>${dayLabel(last.date)}</small>`:'<small>+ нэмэх</small>'}</button>`}).join('');
+    out+=`</div>`;
+    const hist=D.health.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created).slice(0,15);
+    if(hist.length)out+=`<details><summary>Түүх (${D.health.length})</summary>${hist.map(h=>`<div class="row" onclick="measForm('${h.id}')" style="cursor:pointer"><span>${MEAS[h.type].i}</span><div class="main"><div class="ttl">${MEAS[h.type].l}: ${measVal(h)}</div><div class="meta">${dayLabel(h.date)}${h.note?' · '+esc(h.note):''}</div></div></div>`).join('')}</details>`;
+    out+=`</div>`;}
+  } else if(UI.life==='habits'){
+    const t=today();const days=[...Array(7)].map((_,k)=>addDays(t,k-6));
+    out+=`<div class="card"><h2>Зуршил<span class="sp"></span><button class="lnk" onclick="habitForm(null)">+ нэмэх</button></h2>`;
+    out+=D.habits.length?D.habits.map(h=>`<div class="row"><input type="checkbox" class="cb" ${(D.habitLog[t]||{})[h.id]?'checked':''} onchange="toggleHabit('${h.id}')"><div class="main" onclick="habitForm('${h.id}')"><div class="ttl">${esc(h.icon||'')} ${esc(h.name)}</div><div class="meta">🔥 ${streak(h.id)} өдөр</div></div><div class="hgrid">${days.map(d=>`<span class="${(D.habitLog[d]||{})[h.id]?'on':''}">${WD[parseD(d).getDay()].slice(0,1)}</span>`).join('')}</div></div>`).join('')
+      :`<div class="empty">Жишээ: 📖 Ном унших, 🏃 Дасгал, 🚭 Тамхигүй өдөр, 🧘 Бясалгал.</div>`;
+    out+=`</div>`;
+  } else {
+    if(S('shop'))out+=`<div class="card"><h2>Худалдан авах<span class="sp"></span>${D.shopping.some(x=>x.done)?`<button class="lnk" onclick="D.shopping=D.shopping.filter(x=>!x.done);save();render()">Авсныг цэвэрлэх</button>`:''}</h2>
+      <div class="inline-add"><input id="shopIn" placeholder="Талх, сүү, өндөг…" onkeydown="if(event.key==='Enter')addShop()"><button class="btn primary" onclick="addShop()">＋</button></div>
+      ${D.shopping.map(x=>`<div class="row ${x.done?'done':''}"><input type="checkbox" class="cb" ${x.done?'checked':''} onchange="toggleShop('${x.id}')"><div class="main"><div class="ttl">${esc(x.text)}</div></div><button class="btn sm ghost" onclick="D.shopping=D.shopping.filter(s=>s.id!=='${x.id}');save();render()" aria-label="Устгах">✕</button></div>`).join('')||'<div class="empty">Жагсаалт хоосон.</div>'}</div>`;
+    if(S('chores')){
+    out+=`<div class="card"><h2>Гэрийн ажил (давтагддаг)<span class="sp"></span><button class="lnk" onclick="choreForm(null)">+ нэмэх</button></h2>`;
+    out+=D.chores.length?D.chores.slice().sort((a,b)=>choreDays(a)-choreDays(b)).map(c=>`<div class="row"><div class="main" onclick="choreForm('${c.id}')"><div class="ttl">${esc(c.name)}</div><div class="meta">${c.every} хоног тутам · ${choreLabel(c)}</div></div><button class="btn sm" onclick="doChore('${c.id}')">Хийсэн</button></div>`).join('')
+      :`<div class="empty">Жишээ: ус шүүгчийн шүүлтүүр солих (90 хоног), цагаан хэрэглэл угаах (7 хоног), машины тос солих.</div>`;
+    out+=`</div>`;}
+  }
+  return out;
+}
+function waterCard(){
+  const t=today();const n=D.water[t]||0;const g=D.settings.waterGoal||8;
+  return `<div class="card"><h2>Ус<span class="sp"></span><span class="tag ${n>=g?'ok':''}">${n}/${g} аяга</span></h2><div class="water">${[...Array(g)].map((_,k)=>`<button class="${k<n?'on':''}" onclick="setWater(${k<n&&k===n-1?k:k+1})" aria-label="${k+1} аяга">🥛</button>`).join('')}</div></div>`;
+}
+function setWater(n){D.water[today()]=n;save();render()}
+const measVal=h=>h.type==='bp'?`${h.value}/${h.value2||'?'}`:`${h.value} ${MEAS[h.type].u}`;
+function toggleMed(k){const t=today();D.medLog[t]=D.medLog[t]||{};D.medLog[t][k]=!D.medLog[t][k];if(!D.medLog[t][k])delete D.medLog[t][k];save();render()}
+function medStreak(m){let n=0,d=today();const full=day=>(m.times||[]).every(tm=>(D.medLog[day]||{})[m.id+'@'+tm]);if(!full(d))d=addDays(d,-1);while(full(d)&&n<999){n++;d=addDays(d,-1)}return n}
+function toggleHabit(id){const t=today();D.habitLog[t]=D.habitLog[t]||{};D.habitLog[t][id]=!D.habitLog[t][id];if(!D.habitLog[t][id])delete D.habitLog[t][id];save();render()}
+function streak(id){let n=0,d=today();if(!(D.habitLog[d]||{})[id])d=addDays(d,-1);while((D.habitLog[d]||{})[id]&&n<9999){n++;d=addDays(d,-1)}return n}
+function addShop(){const el=$('#shopIn');const v=el.value.trim();if(!v)return;v.split(/[,;]/).map(x=>x.trim()).filter(Boolean).forEach(x=>D.shopping.push({id:uid(),text:x,done:false}));save();render();setTimeout(()=>$('#shopIn')&&$('#shopIn').focus(),0)}
+function toggleShop(id){const x=D.shopping.find(s=>s.id===id);if(x){x.done=!x.done;save();render()}}
+const choreDays=c=>c.last?diffDays(today(),addDays(c.last,c.every)):0;
+const choreLabel=c=>{const d=choreDays(c);return !c.last?'хараахан хийгээгүй':d<0?`<span class="tag bad">${-d} хоног хэтэрсэн</span>`:d===0?'<span class="tag warn">өнөөдөр</span>':`${d} хоногийн дараа`};
+function doChore(id){const c=D.chores.find(x=>x.id===id);if(c){c.last=today();save();render();toast('👍 Тэмдэглэлээ')}}
+
+/* ===================== Маягтууд ===================== */
+function openSheet(html){$('#sheetBody').innerHTML=html;$('#sheet').classList.remove('hidden');document.body.style.overflow='hidden'}
+function closeSheet(){$('#sheet').classList.add('hidden');document.body.style.overflow=''}
+function openForm(cfg){
+  const fld=fl=>{const v=fl.value??'';let inp;
+    if(fl.type==='textarea')inp=`<textarea id="f_${fl.k}" rows="${fl.rows||4}" placeholder="${esc(fl.ph||'')}">${esc(v)}</textarea>`;
+    else if(fl.type==='select')inp=`<select id="f_${fl.k}">${fl.options.map(([val,lab])=>`<option value="${esc(val)}" ${String(val)===String(v)?'selected':''}>${esc(lab)}</option>`).join('')}</select>`;
+    else if(fl.type==='check')return `<div class="fld"><label class="chk"><input type="checkbox" id="f_${fl.k}" ${v?'checked':''}> ${esc(fl.l)}</label></div>`;
+    else inp=`<input id="f_${fl.k}" type="${fl.type||'text'}" value="${esc(v)}" ${fl.type==='number'?'inputmode="decimal" step="any"':''} placeholder="${esc(fl.ph||'')}">`;
+    return `<div class="fld"><label for="f_${fl.k}">${esc(fl.l)}</label>${inp}</div>`};
+  const body=cfg.fields.map(fl=>Array.isArray(fl)?`<div class="fld2">${fl.map(fld).join('')}</div>`:fld(fl)).join('');
+  openSheet(`<h3>${esc(cfg.title)}</h3>${body}${cfg.extra||''}<div class="row-btns">${cfg.onDelete?'<button class="btn danger ghost" id="fDel">Устгах</button>':''}<span class="sp"></span><button class="btn ghost" onclick="closeSheet()">Болих</button><button class="btn primary" id="fSave">Хадгалах</button></div>`);
+  const all=cfg.fields.flat();
+  $('#fSave').onclick=()=>{const o={};all.forEach(fl=>{const el=$('#f_'+fl.k);o[fl.k]=fl.type==='check'?el.checked:fl.type==='number'?(el.value===''?null:Number(el.value)):el.value.trim()});
+    if(cfg.onSave(o)!==false){save();closeSheet();render()}};
+  if(cfg.onDelete)$('#fDel').onclick=()=>{if(confirm('Устгах уу?')){cfg.onDelete();save();closeSheet();render();toast('Устгалаа')}};
+  if(cfg.onOpen)cfg.onOpen();
+  if(!cfg.noFocus)setTimeout(()=>{const f=$('#sheetBody input:not([type=checkbox]),#sheetBody textarea');if(f&&!f.value)f.focus()},60);
+}
+function apptForm(id,preset={}){
+  let i=id?D.items.find(x=>x.id===id):null;const isNew=!i;
+  if(!i)i=Object.assign({appt:'doctor',title:'',place:'',date:'',time:'',remind:1440,remind2:60,prep:'',result:''},preset);
+  const R=[['','Сануулахгүй'],['eve','Өмнөх орой 20:00'],[1440,'1 өдөр өмнө'],[180,'3 цаг өмнө'],[120,'2 цаг өмнө'],[60,'1 цаг өмнө'],[30,'30 мин өмнө'],[0,'Яг цагт нь']];
+  const past=!isNew&&i.date&&i.date<=today();
+  openForm({title:isNew?'Эмчийн цаг / шинжилгээ':'Эмчийн цаг',fields:[
+    {k:'appt',l:'Төрөл',type:'select',value:i.appt,options:Object.entries(APPT).map(([k,v])=>[k,v.i+' '+v.l])},
+    {k:'title',l:'Юу / хэнд',value:i.title,ph:'Жишээ: Дотрын эмч, Цусны ерөнхий шинжилгээ'},
+    {k:'place',l:'Хаана',value:i.place,ph:'Эмнэлэг, өрөөний дугаар'},
+    [{k:'date',l:'Огноо',type:'date',value:i.date},{k:'time',l:'Цаг',type:'time',value:i.time}],
+    [{k:'remind',l:'1-р сануулга',type:'select',value:i.remind??'',options:R},{k:'remind2',l:'2-р сануулга',type:'select',value:i.remind2??'',options:R}],
+    {k:'prep',l:'Бэлтгэл',type:'textarea',rows:2,value:i.prep,ph:'Өлөн элгэн дээр очих, иргэний үнэмлэх, өмнөх шинжилгээний хариу…'},
+    ...(past||i.result?[{k:'result',l:'Үр дүн / эмчийн зөвлөгөө',type:'textarea',rows:3,value:i.result}]:[])],
+    onSave:o=>{if(!o.title){o.title=APPT[o.appt].l}if(!o.date){toast('Огноогоо сонгоно уу');return false}
+      ['remind','remind2'].forEach(k=>{o[k]=o[k]===''?null:o[k]==='eve'?'eve':Number(o[k])});
+      if(!o.time&&(o.remind!==null||o.remind2!==null))toast('Цаг оруулбал сануулга ажиллана');
+      Object.assign(o,{type:'event',cat:'eruul'});
+      if(isNew)D.items.push(Object.assign({id:uid(),created:Date.now(),repeat:'',note:''},i,o));else Object.assign(i,o);toast('Хадгаллаа')},
+    onDelete:isNew?null:()=>{D.items=D.items.filter(x=>x.id!==i.id)}});
+}
+function itemForm(id,preset={}){
+  let i=id?D.items.find(x=>x.id===id):null;const isNew=!i;
+  if((i&&i.appt)||(!i&&preset.appt))return apptForm(id,preset);
+  if(!i)i=Object.assign({type:'task',cat:'huviin',title:'',date:'',time:'',remind:15,repeat:'',note:''},preset);
+  openForm({title:isNew?(i.type==='event'?'Шинэ уулзалт':'Шинэ ажил'):'Засах',fields:[
+    {k:'title',l:'Юу?',value:i.title,ph:'Жишээ: Батаатай уулзах'},
+    [{k:'type',l:'Төрөл',type:'select',value:i.type,options:[['task','✅ Ажил'],['event','📅 Уулзалт']]},
+     {k:'cat',l:'Ангилал',type:'select',value:i.cat,options:Object.entries(CATS).map(([k,v])=>[k,v.l])}],
+    [{k:'date',l:'Огноо',type:'date',value:i.date},{k:'time',l:'Цаг',type:'time',value:i.time}],
+    [{k:'remind',l:'Сануулах',type:'select',value:i.remind,options:[[0,'Яг цагт нь'],[5,'5 мин өмнө'],[15,'15 мин өмнө'],[30,'30 мин өмнө'],[60,'1 цаг өмнө'],[1440,'1 өдөр өмнө']]},
+     {k:'repeat',l:'Давтах',type:'select',value:i.repeat||'',options:[['','Давтахгүй'],['day','Өдөр бүр'],['week','7 хоног бүр'],['month','Сар бүр'],['year','Жил бүр']]}],
+    {k:'note',l:'Нэмэлт тэмдэглэл',type:'textarea',rows:3,value:i.note,ph:'Хаана, хэнтэй, юу авч очих…'}],
+    onSave:o=>{if(!o.title){toast('Юу хийхээ бичнэ үү');return false}
+      o.remind=Number(o.remind);if(o.repeat&&!o.date)o.date=today();
+      if(isNew){D.items.push(Object.assign({id:uid(),created:Date.now()},i,o));}else Object.assign(i,o);
+      toast('Хадгаллаа')},
+    onDelete:isNew?null:()=>{D.items=D.items.filter(x=>x.id!==i.id)}});
+}
+let NF=null; // нээлттэй тэмдэглэлийн зургууд {photos:[{id,cap}], removed:[]}
+function noteForm(id,preset={}){
+  let n=id?D.notes.find(x=>x.id===id):null;const isNew=!n;if(!n)n=Object.assign({title:'',body:'',tags:[],pinned:false,photos:[]},preset);
+  NF={photos:(n.photos||[]).map(p=>Object.assign({},p)),removed:[]};
+  openForm({title:isNew?'Шинэ тэмдэглэл':'Тэмдэглэл',fields:[
+    {k:'title',l:'Гарчиг',value:n.title},{k:'body',l:'Агуулга',type:'textarea',rows:6,value:n.body},
+    {k:'tags',l:'Шошго (таслалаар)',value:(n.tags||[]).join(', '),ph:'ажил, санаа, жор'},{k:'pinned',l:'📌 Дээр нь тогтоох',type:'check',value:n.pinned}],
+    extra:`<div class="fld"><label>Зураг</label><div id="nfPhotos"></div>
+      <div class="btns" style="margin-top:8px"><button type="button" class="btn sm" onclick="$('#camIn').click()">📷 Зураг авах</button><button type="button" class="btn sm" onclick="$('#galIn').click()">🖼 Зургаас сонгох</button></div></div>`,
+    onOpen:renderNF,noFocus:!!preset._photo,
+    onSave:o=>{syncCaps();if(!o.title&&!o.body&&!NF.photos.length)return false;
+      o.tags=o.tags.split(',').map(x=>x.trim().replace(/^#/,'')).filter(Boolean);o.updated=Date.now();
+      o.photos=NF.photos.map(p=>({id:p.id,cap:(p.cap||'').trim()}));
+      if(!o.title&&o.photos.length)o.title=o.photos[0].cap||'Зураг '+dayLabel(today());
+      NF.removed.forEach(id=>imgDel(id).catch(()=>{}));
+      if(isNew)D.notes.push(Object.assign({id:uid()},o));else Object.assign(n,o);NF=null},
+    onDelete:isNew?null:()=>{(n.photos||[]).concat(NF.photos).forEach(p=>imgDel(p.id).catch(()=>{}));D.notes=D.notes.filter(x=>x.id!==n.id);NF=null}});
+}
+function syncCaps(){if(NF)NF.photos.forEach((p,k)=>{const el=$('#cap_'+k);if(el)p.cap=el.value})}
+function renderNF(){
+  const el=$('#nfPhotos');if(!el||!NF)return;
+  el.innerHTML=NF.photos.length?NF.photos.map((p,k)=>`<div class="phedit"><button type="button" class="ph" onclick="viewPhoto('${p.id}')"><img data-img="${p.id}" alt="Зураг ${k+1}"></button>
+      <textarea id="cap_${k}" rows="2" placeholder="Тайлбар бичих…">${esc(p.cap||'')}</textarea>
+      <button type="button" class="btn sm ghost" onclick="removeNF(${k})" aria-label="Зураг хасах">✕</button></div>`).join('')
+    :'<div class="small">Зураг хавсаргаагүй байна.</div>';
+  hydrateImgs(el);
+}
+function removeNF(k){syncCaps();const [p]=NF.photos.splice(k,1);if(p)NF.removed.push(p.id);renderNF()}
+// Зураг авах / сонгох → шахаж IndexedDB-д хадгална. Тэмдэглэл нээлттэй биш бол шинээр нээнэ.
+async function addPhotos(ev){
+  const files=[...ev.target.files];ev.target.value='';if(!files.length)return;
+  if(!$('#nfPhotos'))noteForm(null,{_photo:true});
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  toast('Зураг хадгалж байна…');
+  for(const f of files){
+    try{const b=await compressImage(f);const id='img'+uid();await imgPut(id,b);syncCaps();NF.photos.push({id,cap:''})}
+    catch(e){toast('⚠️ '+(e.message||'Зураг хадгалж чадсангүй'))}
+  }
+  renderNF();toast('✓ Зураг нэмэгдлээ — тайлбараа бичээрэй');setTimeout(()=>{const c=$('#cap_'+(NF.photos.length-1));if(c)c.focus()},80);
+}
+function quickPhoto(){closeSheet();NF=null;$('#camIn').click()}
+async function viewPhoto(id){
+  const u=await imgUrl(id);if(!u)return;
+  const p=(NF&&NF.photos.find(x=>x.id===id))||D.notes.flatMap(n=>n.photos||[]).find(x=>x.id===id)||{};
+  syncCaps();
+  $('#lightbox').innerHTML=`<img src="${u}" alt="">${p.cap?`<div class="lbcap">${esc(p.cap)}</div>`:''}<button class="lbx" aria-label="Хаах">✕</button>`;
+  $('#lightbox').classList.remove('hidden');
+}
+
+/* ===================== Зургийн сан (IndexedDB) ===================== */
+let _idb=null;
+function idb(){return _idb||(_idb=new Promise((res,rej)=>{const r=indexedDB.open('miniiudur-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('imgs');r.onsuccess=()=>res(r.result);r.onerror=()=>{_idb=null;rej(r.error)}}))}
+async function idbDo(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction('imgs',mode);const r=fn(tx.objectStore('imgs'));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error||new Error('Хадгалах зай хүрэлцсэнгүй'))})}
+const imgPut=(id,blob)=>idbDo('readwrite',s=>s.put(blob,id));
+const imgGet=id=>idbDo('readonly',s=>s.get(id));
+const imgDel=id=>{const u=IMGURL.get(id);if(u){URL.revokeObjectURL(u);IMGURL.delete(id)}return idbDo('readwrite',s=>s.delete(id))};
+const imgKeys=()=>idbDo('readonly',s=>s.getAllKeys());
+const IMGURL=new Map();
+async function imgUrl(id){if(IMGURL.has(id))return IMGURL.get(id);try{const b=await imgGet(id);if(!b)return '';const u=URL.createObjectURL(b);IMGURL.set(id,u);return u}catch(e){return ''}}
+function hydrateImgs(root){(root||document).querySelectorAll('img[data-img]:not([src])').forEach(async el=>{const u=await imgUrl(el.dataset.img);if(u)el.src=u;else el.closest('.ph')&&el.closest('.ph').classList.add('missing')})}
+function compressImage(file,max=1600,q=.8){
+  return new Promise((res,rej)=>{const img=new Image();
+    img.onload=()=>{let w=img.naturalWidth,h=img.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+      const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(img.src);
+      c.toBlob(b=>b?res(b):rej(new Error('Зураг хувиргаж чадсангүй')),'image/jpeg',q)};
+    img.onerror=()=>{URL.revokeObjectURL(img.src);rej(new Error('Зураг уншиж чадсангүй'))};
+    img.src=URL.createObjectURL(file)});
+}
+const blobToDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)});
+// Ямар ч тэмдэглэлд хамааралгүй болсон зургийг цэвэрлэнэ (эхлэх үед)
+async function gcImages(){try{const used=new Set(D.notes.flatMap(n=>(n.photos||[]).map(p=>p.id)));for(const k of await imgKeys())if(!used.has(k))await imgDel(k)}catch(e){}}
+function txForm(id,kind,preset={}){
+  let x=id?D.tx.find(t=>t.id===id):null;const isNew=!x;
+  if(!x)x=Object.assign({type:kind||'out',amount:null,cat:kind==='in'?'Цалин':'Хоол',note:'',date:today()},preset);
+  const cats=x.type==='in'?INC_CATS:EXP_CATS.map(c=>c[0]);
+  openForm({title:x.type==='in'?'Орлого':'Зарлага',fields:[
+    {k:'amount',l:'Дүн (₮)',type:'number',value:x.amount},
+    [{k:'cat',l:'Ангилал',type:'select',value:x.cat,options:cats.map(c=>[c,(x.type==='in'?'💵':catIcon(c))+' '+c])},{k:'date',l:'Огноо',type:'date',value:x.date}],
+    {k:'note',l:'Тайлбар',value:x.note,ph:'Юунд?'}],
+    onSave:o=>{if(!o.amount||o.amount<=0){toast('Дүнгээ оруулна уу');return false}
+      if(isNew)D.tx.push(Object.assign({id:uid(),type:x.type,created:Date.now()},o));else Object.assign(x,o);toast('Хадгаллаа')},
+    onDelete:isNew?null:()=>{D.tx=D.tx.filter(t=>t.id!==x.id)}});
+}
+function budgetForm(){openForm({title:'Сарын зарлагын төсөв',fields:[{k:'b',l:'Дүн (₮) — 0 бол төсөвгүй',type:'number',value:D.budget||''}],onSave:o=>{D.budget=o.b||0}})}
+function billForm(id){
+  let b=id?D.bills.find(x=>x.id===id):null;const isNew=!b;if(!b)b={name:'',amount:null,day:1,cat:'Төлбөр'};
+  openForm({title:'Тогтмол төлбөр',fields:[{k:'name',l:'Нэр',value:b.name,ph:'Түрээс, интернет, зээл…'},
+    [{k:'amount',l:'Дүн (₮)',type:'number',value:b.amount},{k:'day',l:'Сарын хэдэнд',type:'number',value:b.day}],
+    {k:'cat',l:'Ангилал',type:'select',value:b.cat,options:EXP_CATS.map(c=>[c[0],c[1]+' '+c[0]])}],
+    onSave:o=>{if(!o.name||!o.amount)return false;o.day=Math.max(1,Math.min(31,Math.round(o.day||1)));if(isNew)D.bills.push(Object.assign({id:uid(),paid:[]},o));else Object.assign(b,o)},
+    onDelete:isNew?null:()=>{D.bills=D.bills.filter(x=>x.id!==b.id)}});
+}
+function medForm(id){
+  let m=id?D.meds.find(x=>x.id===id):null;const isNew=!m;if(!m)m={name:'',dose:'',times:['08:00']};
+  openForm({title:'Эм',fields:[{k:'name',l:'Эмийн нэр',value:m.name},{k:'dose',l:'Тун',value:m.dose,ph:'1 шахмал, 500мг…'},
+    {k:'times',l:'Уух цагууд (таслалаар)',value:(m.times||[]).join(', '),ph:'08:00, 20:00'}],
+    onSave:o=>{if(!o.name)return false;o.times=o.times.split(/[,\s]+/).map(t=>{const mm=t.match(/^(\d{1,2})(?::(\d{2}))?$/);return mm&&+mm[1]<24?pad(+mm[1])+':'+(mm[2]||'00'):null}).filter(Boolean).sort();
+      if(isNew)D.meds.push(Object.assign({id:uid()},o));else Object.assign(m,o)},
+    onDelete:isNew?null:()=>{D.meds=D.meds.filter(x=>x.id!==m.id)}});
+}
+function measForm(id,type){
+  let h=id?D.health.find(x=>x.id===id):null;const isNew=!h;if(!h)h={type:type||'weight',value:null,value2:null,date:today(),note:''};
+  const f=[{k:'type',l:'Төрөл',type:'select',value:h.type,options:Object.entries(MEAS).map(([k,v])=>[k,v.i+' '+v.l])}];
+  f.push(h.type==='bp'?[{k:'value',l:'Дээд',type:'number',value:h.value},{k:'value2',l:'Доод',type:'number',value:h.value2}]:{k:'value',l:'Утга'+(MEAS[h.type].u?' ('+MEAS[h.type].u+')':''),type:'number',value:h.value});
+  f.push({k:'date',l:'Огноо',type:'date',value:h.date},{k:'note',l:'Тэмдэглэл',value:h.note});
+  openForm({title:'Хэмжилт',fields:f,
+    onSave:o=>{if(o.type!==h.type&&isNew){closeSheet();measForm(null,o.type);return false}if(o.value==null){toast('Утгаа оруулна уу');return false}
+      if(isNew)D.health.push(Object.assign({id:uid(),created:Date.now()},o));else Object.assign(h,o)},
+    onDelete:isNew?null:()=>{D.health=D.health.filter(x=>x.id!==h.id)}});
+  $('#f_type').onchange=e=>{if(isNew){closeSheet();measForm(null,e.target.value)}};
+}
+function habitForm(id){
+  let h=id?D.habits.find(x=>x.id===id):null;const isNew=!h;if(!h)h={name:'',icon:'🌱'};
+  openForm({title:'Зуршил',fields:[[{k:'icon',l:'Тэмдэг',value:h.icon},{k:'name',l:'Нэр',value:h.name,ph:'Ном унших'}]],
+    onSave:o=>{if(!o.name)return false;if(isNew)D.habits.push(Object.assign({id:uid()},o));else Object.assign(h,o)},
+    onDelete:isNew?null:()=>{D.habits=D.habits.filter(x=>x.id!==h.id)}});
+}
+function choreForm(id){
+  let c=id?D.chores.find(x=>x.id===id):null;const isNew=!c;if(!c)c={name:'',every:7,last:''};
+  openForm({title:'Гэрийн ажил',fields:[{k:'name',l:'Нэр',value:c.name,ph:'Шүүлтүүр солих'},[{k:'every',l:'Хэдэн хоног тутам',type:'number',value:c.every},{k:'last',l:'Сүүлд хийсэн',type:'date',value:c.last}]],
+    onSave:o=>{if(!o.name)return false;o.every=Math.max(1,Math.round(o.every||7));if(isNew)D.chores.push(Object.assign({id:uid()},o));else Object.assign(c,o)},
+    onDelete:isNew?null:()=>{D.chores=D.chores.filter(x=>x.id!==c.id)}});
+}
+
+/* ===================== Хурдан нэмэх ===================== */
+function openQuick(){
+  openSheet(`<h3>Хурдан нэмэх</h3>
+    <textarea id="qIn" rows="2" placeholder="Юу ч бичээрэй…"></textarea>
+    <div id="qPrev" class="qprev"></div>
+    <div class="row-btns"><button class="btn ghost" onclick="quickEdit()">✏️ Дэлгэрэнгүй</button><span class="sp"></span><button class="btn primary" onclick="quickSave()">Нэмэх</button></div>
+    <div class="hint" style="margin-top:12px">Жишээ: <code>маргааш 10-д Батаатай уулзалт</code> <code>баасан гарагт ээжийнд очих</code> <code>12/05 эмчид үзүүлэх</code> <code>хоол 12000</code> <code>такси 8к</code> <code>+цалин 2сая</code> <code>авах: талх, сүү</code> <code>тэмдэглэл: санаа…</code></div>
+    <div class="manual">
+      <button onclick="itemForm(null,{})">✅ Ажил</button><button onclick="itemForm(null,{type:'event',date:today()})">📅 Уулзалт</button><button onclick="noteForm(null)">📝 Тэмдэглэл</button><button onclick="quickPhoto()">📷 Зураг</button>
+      <button onclick="txForm(null,'out')">💸 Зарлага</button><button onclick="txForm(null,'in')">💵 Орлого</button><button onclick="measForm(null)">📈 Хэмжилт</button>
+      <button onclick="apptForm(null)">🩺 Эмчийн цаг</button><button onclick="apptForm(null,{appt:'lab',remind:'eve'})">🧪 Шинжилгээ</button><button onclick="medForm(null)">💊 Эм</button>
+    </div>`);
+  const el=$('#qIn');el.oninput=qPreview;el.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();quickSave()}};
+  setTimeout(()=>el.focus(),60);qPreview();
+}
+function qDescribe(p){
+  if(!p)return '<span class="small">Бичихэд юу үүсгэхийг энд харуулна.</span>';
+  if(p.kind==='note')return `<span class="k">📝 Тэмдэглэл</span> — ${esc(p.title)}${p.tags.length?' · '+p.tags.map(t=>'#'+esc(t)).join(' '):''}`;
+  if(p.kind==='shop')return `<span class="k">🛒 Худалдан авах</span> — ${p.list.map(esc).join(', ')||'…'}`;
+  if(p.kind==='tx')return `<span class="k">${p.type==='in'?'💵 Орлого':'💸 Зарлага'}</span> · <b>${money(p.amount)}</b> · ${catIcon(p.cat)} ${esc(p.cat)}${p.note?' — '+esc(p.note):''}${p.date!==today()?' · '+dayLabel(p.date):''}`;
+  const c=CATS[p.cat];
+  if(p.appt)return `<span class="k">${APPT[p.appt].i} ${APPT[p.appt].l}</span> · ${p.date?dayLabel(p.date):'<b>огноо сонгоно</b>'}${p.time?' '+p.time:''} · 🔔 ${p.remind==='eve'?'өмнөх орой':'1 өдөр өмнө'} + 1 цаг өмнө<br>“${esc(p.title)}”`;
+  return `<span class="k">${p.type==='event'?'📅 Уулзалт':'✅ Ажил'}</span> · ${p.date?dayLabel(p.date):'хугацаагүй'}${p.time?' '+p.time:''} · <span class="dot" style="background:${c.c}"></span> ${c.l}${p.repeat==='year'?' · 🔁 жил бүр':''}<br>“${esc(p.title)}”`;
+}
+function qPreview(){$('#qPrev').innerHTML=qDescribe(parseQuick($('#qIn').value))}
+function quickSave(){
+  const p=parseQuick($('#qIn').value);if(!p)return;
+  if(p.kind==='note'){if(!p.body)return;D.notes.push({id:uid(),title:p.title,body:p.body,tags:p.tags,pinned:false,updated:Date.now()})}
+  else if(p.kind==='shop'){p.list.forEach(x=>D.shopping.push({id:uid(),text:x,done:false}))}
+  else if(p.kind==='tx'){D.tx.push({id:uid(),type:p.type,amount:p.amount,cat:p.cat,note:p.note,date:p.date,created:Date.now()})}
+  else{if(p.appt&&!p.date){closeSheet();return apptForm(null,p)}
+    const it={id:uid(),type:p.type,title:p.title,cat:p.cat,date:p.date,time:p.time,remind:p.remind,repeat:p.repeat,note:'',created:Date.now()};
+    if(p.appt)Object.assign(it,{appt:p.appt,remind2:p.remind2,place:'',prep:''});D.items.push(it)}
+  save();closeSheet();render();toast('✓ Нэмлээ');
+}
+function quickEdit(){
+  const p=parseQuick($('#qIn').value);
+  if(!p)return itemForm(null,{});
+  if(p.kind==='note')return noteForm(null,{title:p.title,body:p.body,tags:p.tags});
+  if(p.kind==='shop'){UI.life='home';closeSheet();return setView('life')}
+  if(p.kind==='tx')return txForm(null,p.type,{amount:p.amount,cat:p.cat,note:p.note,date:p.date});
+  if(p.appt)return apptForm(null,{appt:p.appt,title:p.title,date:p.date,time:p.time,remind:p.remind,remind2:p.remind2});
+  itemForm(null,{type:p.type,title:p.title,cat:p.cat,date:p.date,time:p.time,remind:p.remind,repeat:p.repeat});
+}
+
+/* ===================== Хайлт ===================== */
+function openSearch(){
+  openSheet(`<h3>🔍 Хайх</h3><input id="sIn" placeholder="Ажил, тэмдэглэл, гүйлгээ…"><div id="sRes" style="margin-top:10px"></div>`);
+  const el=$('#sIn');el.oninput=()=>{const q=el.value.trim().toLowerCase();if(q.length<2){$('#sRes').innerHTML='';return}
+    const r=[];
+    D.items.filter(i=>(i.title+' '+(i.note||'')).toLowerCase().includes(q)).forEach(i=>r.push(`<div class="row"><div class="main" onclick="itemForm('${i.id}')"><div class="ttl">${i.type==='event'?'📅':'✅'} ${esc(i.title)}</div><div class="meta">${i.date?dayLabel(i.date):'хугацаагүй'}${isDone(i,i.date)?' · дууссан':''}</div></div></div>`));
+    D.notes.filter(n=>(n.title+' '+n.body+' '+(n.photos||[]).map(p=>p.cap).join(' ')).toLowerCase().includes(q)).forEach(n=>r.push(`<div class="row"><div class="main" onclick="noteForm('${n.id}')"><div class="ttl">📝 ${esc(n.title||'Гарчиггүй')}</div><div class="meta">${esc(n.body.slice(0,60))}</div></div></div>`));
+    D.tx.filter(x=>(x.note+' '+x.cat).toLowerCase().includes(q)).slice(0,20).forEach(x=>r.push(`<div class="row"><div class="main" onclick="txForm('${x.id}')"><div class="ttl">${catIcon(x.cat)} ${esc(x.note||x.cat)}</div><div class="meta">${dayLabel(x.date)}</div></div><span class="amt ${x.type}">${money(x.amount)}</span></div>`));
+    $('#sRes').innerHTML=r.join('')||'<div class="empty">Олдсонгүй.</div>'};
+  setTimeout(()=>el.focus(),60);
+}
+
+/* ===================== Тохиргоо, нөөц ===================== */
+function openSettings(){
+  const s=D.settings;const perm=('Notification' in window)?Notification.permission:'unsupported';
+  openSheet(`<h3>⚙️ Тохиргоо</h3>
+    <div class="fld"><label>Таны нэр</label><input id="sName" value="${esc(s.name)}" placeholder="Мэндчилгээнд гарна"></div>
+    <div class="fld2"><div class="fld"><label>Өнгө</label><select id="sTheme"><option value="auto">Автомат</option><option value="light">Цайвар</option><option value="dark">Бараан</option></select></div>
+    <div class="fld"><label>Үсгийн хэмжээ</label><select id="sFs"><option value="15">Жижиг</option><option value="16">Дунд</option><option value="18">Том</option><option value="20">Маш том</option></select></div></div>
+    <div class="fld"><label>Өдрийн усны зорилго (аяга)</label><input id="sWater" type="number" value="${s.waterGoal||8}"></div>
+    <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.':perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
+      <div class="btns" style="margin-top:8px"><button class="btn sm" onclick="enableNotify()">${s.notify?'Дахин шалгах':'Асаах'}</button>${s.notify?'<button class="btn sm ghost" onclick="D.settings.notify=false;save();openSettings()">Унтраах</button>':''}</div></div>
+    <div class="card"><h2>Ажлын хуваарь<span class="sp"></span><button class="lnk" onclick="openRoster()">${s.sheetName?'Тохируулах':'Холбох'}</button></h2><div class="small">${s.sheetName?esc(s.sheetName)+' · '+(s.sheetLast?'шинэчилсэн '+new Date(s.sheetLast).toLocaleString('mn-MN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—'):'Google Sheet дэх ээлжийн хуваарийг холбоно.'}</div></div>
+    <div class="card"><h2>Нөөц хуулбар</h2><div class="small">Бүх мэдээлэл зөвхөн энэ төхөөрөмж дээр хадгалагдана. Утас солих, апп устгахаас өмнө нөөц хуулбар авч Drive, имэйл рүүгээ хадгалаарай.</div>
+      <div class="btns" style="margin-top:8px"><button class="btn sm primary" onclick="exportBackup()">Нөөц авах</button><button class="btn sm" onclick="$('#restoreInput').click()">Сэргээх</button></div>
+      <div class="small" style="margin-top:6px">Сүүлд нөөц авсан: ${s.lastBackup?dayLabel(s.lastBackup):'хэзээ ч'}</div></div>
+    <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
+    <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}</div>`);
+  $('#sTheme').value=s.theme;$('#sFs').value=String(s.fs||16);
+  $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));save();closeSheet();render()};
+}
+async function enableNotify(){
+  if(!('Notification' in window)){toast('Энэ хөтөч сануулга дэмжихгүй');return}
+  const p=await Notification.requestPermission();D.settings.notify=p==='granted';save();
+  if(p==='granted')notify('Миний өдөр','Сануулга ажиллаж байна ✓');else toast('Зөвшөөрөл өгөөгүй');
+  openSettings();
+}
+async function backupText(){
+  const images={};
+  for(const n of D.notes)for(const p of n.photos||[]){try{const b=await imgGet(p.id);if(b)images[p.id]=await blobToDataURL(b)}catch(e){}}
+  return JSON.stringify({app:'minii-udur',version:VERSION,exported:new Date().toISOString(),data:D,images});
+}
+async function exportBackup(){
+  const name='minii-udur-'+today()+'.txt';const txt=await backupText();
+  D.settings.lastBackup=today();save();
+  try{const f=new File([txt],name,{type:'text/plain'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Миний өдөр — нөөц'});return}}catch(e){if(e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Татаж авлаа: '+name);
+}
+function importBackup(ev){
+  const f=ev.target.files[0];ev.target.value='';if(!f)return;
+  const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);const d=j.data||j;if(!d.items&&!d.notes&&!d.tx)throw 0;
+    if(!confirm('Одоогийн мэдээллийг нөөц хуулбараар солих уу?'))return;
+    D=Object.assign(JSON.parse(JSON.stringify(DEF)),d);D.settings=Object.assign({},DEF.settings,d.settings||{});save();closeSheet();
+    (async()=>{for(const [id,url] of Object.entries(j.images||{})){try{await imgPut(id,await (await fetch(url)).blob())}catch(e){}}render();toast('✓ Сэргээлээ')})()}
+    catch(e){alert('Энэ файл “Миний өдөр”-ийн нөөц биш байна.')}};
+  r.readAsText(f);
+}
+function wipeAll(){if(!confirm('Бүх мэдээллийг устгах уу? Буцаах боломжгүй.'))return;if(!confirm('Үнэхээр итгэлтэй байна уу?'))return;D=JSON.parse(JSON.stringify(DEF));save();closeSheet();render()}
+
+/* ===================== Сануулга ===================== */
+function notify(title,body){
+  toast('🔔 '+title+(body?' — '+body:''));
+  if(!D.settings.notify||!('Notification' in window)||Notification.permission!=='granted')return;
+  const opt={body,icon:'icon-192.png',badge:'icon-192.png',tag:title+body};
+  if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.ready.then(r=>r.showNotification(title,opt)).catch(()=>{try{new Notification(title,opt)}catch(e){}});
+  else{try{new Notification(title,opt)}catch(e){}}
+}
+function checkReminders(){
+  const n=now();const t=today();const tm=addDays(t,1);let changed=false;
+  const fire=(key,title,body)=>{if(D.notified[key])return;D.notified[key]=t;changed=true;notify(title,body)};
+  const W=10*60000; // 10 мин цонх
+  D.items.forEach(i=>{if(!i.time)return;[t,tm].forEach(day=>{if(!occurs(i,day)||isDone(i,day))return;
+    const [y,mo,d]=day.split('-').map(Number);const [h,mi]=i.time.split(':').map(Number);
+    const start=new Date(y,mo-1,d,h,mi).getTime();
+    const title=(i.appt?(APPT[i.appt]||APPT.other).i+' ':i.type==='event'?'📅 ':'✅ ')+i.title;
+    const body=(day===t?'Өнөөдөр ':'Маргааш ')+i.time+(i.place?' · '+i.place:'')+(i.prep?' · '+i.prep:'');
+    [i.remind,i.remind2].forEach((r,k)=>{if(r===undefined||r===null||r===''||+r<0)return;
+      const at=r==='eve'?new Date(y,mo-1,d-1,20,0).getTime():start-(+r||0)*60000;
+      // апп хаалттай байсан бол ч цаг нь болохоос өмнө нээхэд нэг удаа сануулна
+      if(n>=at&&n<Math.max(start,at+W))fire('i'+i.id+day+'_'+k,title,body)})})});
+  const mins=n.getHours()*60+n.getMinutes();
+  D.meds.forEach(m=>(m.times||[]).forEach(x=>{const k=m.id+'@'+x;if((D.medLog[t]||{})[k])return;const d=mins-toMin(x);
+    if(d>=0&&d<60)fire('m'+k+t,'💊 '+m.name,'Эм уух цаг '+x+(m.dose?' · '+m.dose:''))}));
+  if(mins>=8*60&&mins<12*60){
+    const tasks=D.items.filter(i=>!i.time&&occurs(i,t)&&!isDone(i,t)).length;
+    const bills=billsDue(1).length;
+    if(tasks||bills)fire('morning'+t,'☀️ Өнөөдөр',[tasks?tasks+' ажил':'',bills?bills+' төлбөр ойртсон':''].filter(Boolean).join(', '));
+  }
+  if(mins>=21*60&&mins<23*60&&!(D.journal[t]&&D.journal[t].mood))fire('j'+t,'✍️ Оройн 2 минут','Өнөөдөр ямар байв?');
+  Object.keys(D.notified).forEach(k=>{if(D.notified[k]<addDays(t,-2)){delete D.notified[k];changed=true}});
+  if(changed)save();
+}
+
+/* ===================== Ажлын хуваарь (Google Sheet) ===================== */
+// ROSTER-START
+// Ээлжийн тэмдэгт → [эхлэх, дуусах]. Хуваарийн доорх тайлбараас.
+const SHIFT_CODES={'8':['08:00','16:30'],'16':['16:00','08:00'],'12':['09:00','21:00'],'7':['09:00','16:00'],'24':['08:00','08:00'],
+  'өг':['08:00','15:30'],'өд':['14:00','21:00'],'б':['08:00','21:00']};
+const SHIFT_LABELS={'ч':'Чөлөө','өвчтэй':'Өвчтэй','өвч':'Өвчтэй','э':'Ээлжийн амралт','а':'Амралт'};
+const NAME_RE=/^[А-ЯӨҮЁ]{1,2}\.\s?[А-ЯӨҮЁ][А-ЯӨҮЁа-яөүё\-]+$/;
+function parseRoster(sheets){
+  const people=new Set(),shifts=[];
+  for(const sh of sheets||[]){
+    const m=String(sh.name).match(/(20\d\d)\D+(\d{1,2})/);if(!m)continue;
+    const y=+m[1],mo=+m[2],V=sh.values||[];
+    const last=new Date(y,mo,0).getDate();
+    let hr=-1,dayCol=null;
+    for(let r=0;r<Math.min(V.length,20)&&hr<0;r++){
+      const cols={};let n=0;
+      (V[r]||[]).forEach((c,ci)=>{const v=String(c).trim();if(/^\d{1,2}$/.test(v)&&+v>=1&&+v<=31){cols[ci]=+v;n++}});
+      if(n>=27&&Object.values(cols).includes(1)){hr=r;dayCol=cols}
+    }
+    if(hr<0)continue;
+    const first=Math.min(...Object.keys(dayCol).map(Number));
+    let section='';
+    for(let r=hr+1;r<V.length;r++){
+      const row=V[r]||[];let name='';
+      for(let ci=0;ci<first;ci++){const v=String(row[ci]||'').trim();if(!v)continue;if(NAME_RE.test(v))name=v;else if(v.length<=12)section=v}
+      if(!name)continue;
+      people.add(name);
+      for(const [ci,day] of Object.entries(dayCol)){
+        const v=String(row[ci]||'').trim();if(!v||day>last)continue;
+        shifts.push({name,section,date:y+'-'+pad(mo)+'-'+pad(day),code:v});
+      }
+    }
+  }
+  return {people:[...people].sort(),shifts};
+}
+function rosterItems(ro,name,remind){
+  const out=[];const seen=new Set();
+  ro.shifts.filter(s=>s.name===name).forEach(s=>{
+    const k=s.code.toLowerCase().replace(/\s+/g,'');const t=SHIFT_CODES[k];
+    const id='sh-'+s.date+'-'+k+'-'+s.section;if(seen.has(id))return;seen.add(id);
+    const label=SHIFT_LABELS[k]||(/амралт/.test(k)?'Амралт':s.code);
+    out.push({id,source:'sheet',type:'event',cat:'ajil',title:t?(s.section?s.section+' ':'')+'ээлж ('+s.code+')':(s.section?s.section+': ':'')+label,
+      date:s.date,time:t?t[0]:'',end:t?t[1]:'',remind:t&&remind>=0?remind:null,repeat:'',note:'Ажлын хуваариас ('+s.code+')'});
+  });
+  return out;
+}
+// ROSTER-END
+const SHEET_LINK='https://docs.google.com/spreadsheets/d/1seWg1MBaKH9GCyZ6A-U-omfMONuJNxLg/edit';
+function rosterUrl(force){const s=D.settings;return s.sheetUrl+(s.sheetUrl.includes('?')?'&':'?')+'key='+encodeURIComponent(s.sheetKey)+(force?'&force=1':'')+'&t='+Date.now()}
+let _syncing=false;
+async function syncRoster(manual){
+  const s=D.settings;if(!s.sheetUrl||_syncing)return null;_syncing=true;
+  try{
+    const r=await fetch(rosterUrl(manual));const j=await r.json();if(j.error)throw new Error(j.error);
+    const ro=parseRoster(j.sheets);
+    if(!ro.people.length)throw new Error('Хуваарийн хүснэгт олдсонгүй');
+    D.sheetPeople=ro.people;s.sheetLast=Date.now();
+    let n=0;
+    if(s.sheetName){
+      const months=new Set(ro.shifts.map(x=>ym(x.date)));
+      const doneIds=new Set(D.items.filter(i=>i.source==='sheet'&&i.done).map(i=>i.id));
+      D.items=D.items.filter(i=>!(i.source==='sheet'&&months.has(ym(i.date))));
+      const add=rosterItems(ro,s.sheetName,s.sheetRemind);n=add.length;
+      add.forEach(i=>{i.done=doneIds.has(i.id);i.created=Date.now();D.items.push(i)});
+    }
+    save();if($('#sheet').classList.contains('hidden'))render();
+    if(manual)toast(s.sheetName?'✓ Хуваарь шинэчлэгдлээ — '+n+' өдөр':'Холбогдлоо. Одоо нэрээ сонгоно уу');
+    return ro;
+  }catch(e){if(manual)toast('Хуваарь татаж чадсангүй: '+e.message);return null}
+  finally{_syncing=false}
+}
+function openRoster(){
+  const s=D.settings;const ppl=D.sheetPeople||[];
+  openSheet(`<h3>Ажлын хуваарь</h3>
+    <div class="small" style="margin-bottom:10px">Google Sheet дэх ээлжийн хуваарь таны “Ажил” хэсэгт автоматаар орж, ээлж эхлэхээс өмнө сануулна. Апп нээх бүрт (30 минутаас илүү хугацааны дараа) өөрөө шинэчлэгдэнэ.</div>
+    <div class="fld"><label>Apps Script холбоос</label><input id="rUrl" value="${esc(s.sheetUrl)}" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="fld"><label>Түлхүүр</label><input id="rKey" value="${esc(s.sheetKey)}" autocomplete="off"></div>
+    ${ppl.length?`<div class="fld2"><div class="fld"><label>Та хэн бэ?</label><select id="rName"><option value="">— сонгох —</option>${ppl.map(p=>`<option ${p===s.sheetName?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="fld"><label>Сануулах</label><select id="rRem">${[[-1,'Сануулахгүй'],[30,'30 мин өмнө'],[60,'1 цаг өмнө'],[120,'2 цаг өмнө'],[720,'12 цаг өмнө']].map(([v,l])=>`<option value="${v}" ${+s.sheetRemind===v?'selected':''}>${l}</option>`).join('')}</select></div></div>`:''}
+    <div class="small">${s.sheetLast?'Сүүлд шинэчилсэн: '+new Date(s.sheetLast).toLocaleString('mn-MN'):'Холбогдоогүй'}</div>
+    <div class="btns" style="margin-top:10px"><a class="btn sm" href="${SHEET_LINK}" target="_blank" rel="noopener" style="text-decoration:none">Хүснэгтийг нээх ↗</a></div>
+    <div class="row-btns">${s.sheetUrl?'<button class="btn danger ghost" onclick="unlinkRoster()">Салгах</button>':''}<span class="sp"></span><button class="btn ghost" onclick="closeSheet()">Хаах</button><button class="btn primary" id="rSave">${ppl.length?'Хадгалах':'Холбох'}</button></div>`);
+  $('#rSave').onclick=async()=>{
+    s.sheetUrl=$('#rUrl').value.trim();s.sheetKey=$('#rKey').value.trim();
+    if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(s.sheetUrl)){toast('Apps Script холбоос буруу байна');return}
+    const prev=s.sheetName;
+    if($('#rName')){s.sheetName=$('#rName').value;s.sheetRemind=+$('#rRem').value}
+    if(prev&&prev!==s.sheetName)D.items=D.items.filter(i=>i.source!=='sheet');
+    save();$('#rSave').disabled=true;$('#rSave').textContent='Татаж байна…';
+    await syncRoster(true);openRoster();
+  };
+}
+function unlinkRoster(){
+  if(!confirm('Ажлын хуваарийг салгаж, хуваариас орсон ээлжүүдийг устгах уу?'))return;
+  D.items=D.items.filter(i=>i.source!=='sheet');Object.assign(D.settings,{sheetUrl:'',sheetKey:'',sheetName:'',sheetLast:0});D.sheetPeople=[];save();closeSheet();render();
+}
+const autoRoster=()=>{if(D.settings.sheetUrl&&navigator.onLine!==false&&Date.now()-(D.settings.sheetLast||0)>30*60000)syncRoster(false)};
+
+/* ===================== Эхлүүлэх ===================== */
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.v==='life')UI.life='health';if(b.dataset.v==='plan')UI.planCat='all';setView(b.dataset.v)});
+try{const v=localStorage.getItem(KEY+'.view');if(v&&['home','today','plan','notes','money','life'].includes(v))VIEW=v}catch(e){}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeDrawer()}});
+let _lastDay=today();
+setInterval(()=>{checkReminders();if(today()!==_lastDay){_lastDay=today();if($('#sheet').classList.contains('hidden'))render()}},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();autoRoster();if($('#sheet').classList.contains('hidden'))render()}});
+render();checkReminders();autoRoster();setTimeout(gcImages,3000);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
