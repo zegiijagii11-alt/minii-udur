@@ -1,5 +1,5 @@
-const CACHE = 'minii-udur-v1.8.0';
-const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'minii-udur-v1.8.1';
+const ASSETS = ["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","css/style.css","js/cloud.js","js/data.js","js/forms.js","js/logic.js","js/main.js","js/native.js","js/pages.js","js/reminders.js","js/settings.js","js/views.js"];
 const FB_SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 
 self.addEventListener('install', e => {
@@ -25,7 +25,7 @@ self.addEventListener('fetch', e => {
       const copy = r.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy));
       return r;
-    }).catch(() => caches.match(e.request).then(r => r || caches.match('index.html')))
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html')))
   );
 });
 self.addEventListener('notificationclick', e => {
