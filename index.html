@@ -303,7 +303,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.7.0';
+const VERSION='1.7.1';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],contrastRooms:['CT','MRI'],reportRemind:'20:00'},notified:{}};
@@ -631,8 +631,11 @@ function vHome(){
   const greet=h<5?'Сайхан амраарай':h<12?'Өглөөний мэнд':h<18?'Өдрийн мэнд':'Оройн мэнд';
   const G=groups();
   return `<div class="homehead"><div class="hello">${greet}${D.settings.name?', '+esc(D.settings.name):''}</div><div class="sub">${longDate(today())}</div></div>
-    <div class="tiles">${Object.entries(G).map(([k,g],idx,arr)=>`<button class="tile${idx===arr.length-1&&arr.length%2?' wide':''}" onclick="openGroup('${k}')"><svg viewBox="0 0 24 24">${TILE_ICONS[g.ic]}</svg>${badge(sumN(g))}<span>${g.l}</span></button>`).join('')}</div>`+reportMini()+homeTodo();
+    <div class="tiles">${Object.entries(G).map(([k,g],idx,arr)=>`<button class="tile${idx===arr.length-1&&arr.length%2?' wide':''}" onclick="openGroup('${k}')"><svg viewBox="0 0 24 24">${TILE_ICONS[g.ic]}</svg>${badge(sumN(g))}<span>${g.l}</span></button>`).join('')}</div>`+reportMini()+(h>=17||D.journal[today()]?journalCard(today()):'')+homeTodo();
 }
+// Оройн сануулга дээр дарахад: нүүр хуудас → тэмдэглэлийн талбар
+function goJournal(){if(!$('#sheet').classList.contains('hidden'))closeSheet();if(VIEW!=='home')setView('home');else render();
+  setTimeout(()=>{const g=$('#jGood');if(g){g.scrollIntoView({block:'center'});g.focus()}},150)}
 // Нүүрний доод хэсэг: өнөөдөр хийх ажлын жагсаалт
 function homeTodo(){
   const t=today();
@@ -891,14 +894,28 @@ function journalCard(t){
   return `<div class="card"><h2>Оройн 2 минут</h2>
     <div class="small" style="margin-bottom:6px">Өнөөдөр ямар байв?</div>
     <div class="moods">${moods.map((e,k)=>`<button class="${j.mood===k+1?'on':''}" onclick="setJ('mood',${k+1})">${e}</button>`).join('')}</div>
-    <div class="fld"><label>Өнөөдөр юу сайн болсон бэ?</label><textarea rows="2" onchange="setJ('good',this.value)">${esc(j.good||'')}</textarea></div>
-    <div class="fld"><label>Маргаашийн хамгийн чухал 1 ажил</label><input value="${esc(j.top||'')}" onchange="setJ('top',this.value)" placeholder="Жишээ: тайлангаа дуусгах"></div>
+    <div class="fld"><label>Өдөр ямар байсан бэ? (тэмдэглэл)</label><textarea id="jGood" rows="4" oninput="jDraft('good',this.value)" onchange="setJ('good',this.value)" placeholder="Юу болсон, юу сайн байсан, юу мэдэрсэн…">${esc(j.good||'')}</textarea></div>
+    <div class="fld"><label>Маргаашийн хамгийн чухал 1 ажил</label><input id="jTop" value="${esc(j.top||'')}" oninput="jDraft('top',this.value)" onchange="setJ('top',this.value)" placeholder="Жишээ: тайлангаа дуусгах"></div>
+    <button class="btn primary" style="width:100%" onclick="saveJ()">Хадгалах</button>
+    ${journalPast(t)}
   </div>`;
 }
-function setJ(k,v){const t=today();D.journal[t]=D.journal[t]||{};D.journal[t][k]=v;
+function journalPast(t){
+  const moods=['😞','🙁','😐','🙂','😄'];
+  const days=Object.keys(D.journal).filter(d=>d<t&&D.journal[d]&&(D.journal[d].good||D.journal[d].mood)).sort().reverse().slice(0,30);
+  if(!days.length)return '';
+  return `<details style="margin-top:10px"><summary class="small">Өмнөх өдрүүдийн тэмдэглэл (${days.length})</summary>${days.map(d=>{const j=D.journal[d];
+    return `<div class="row"><div class="main"><div class="ttl">${j.mood?moods[j.mood-1]+' ':''}${longDate(d)}</div>${j.good?`<div class="meta" style="white-space:pre-wrap">${esc(j.good)}</div>`:''}</div></div>`}).join('')}</details>`;
+}
+// Бичих явцад шууд локалд хадгална (апп хаагдсан ч алдагдахгүй), үүлэнд товч дарахад/талбараас гарахад
+let _jT;function jDraft(k,v){const t=today();D.journal[t]=D.journal[t]||{};D.journal[t][k]=v;clearTimeout(_jT);_jT=setTimeout(saveLocal,400)}
+function saveJ(){const g=$('#jGood'),tp=$('#jTop');clearTimeout(_jT);
+  const t=today();D.journal[t]=D.journal[t]||{};if(g)D.journal[t].good=g.value;
+  if(tp)setJ('top',tp.value,true);else save();toast('Тэмдэглэл хадгаллаа ✓');document.activeElement&&document.activeElement.blur()}
+function setJ(k,v,quiet){const t=today();D.journal[t]=D.journal[t]||{};D.journal[t][k]=v;
   if(k==='top'&&v.trim()){const tm=addDays(t,1);if(!D.items.some(i=>i.fromJournal===t)){D.items.push({id:uid(),type:'task',title:v.trim(),cat:'huviin',date:tm,time:'',remind:0,repeat:'',note:'',fromJournal:t,created:Date.now()})}
     else{const i=D.items.find(i=>i.fromJournal===t);i.title=v.trim()}}
-  save();if(k==='mood')render();else toast('Хадгаллаа')}
+  save();if(k==='mood')render();else if(!quiet)toast('Хадгаллаа')}
 function weekCard(){
   const t=today();const days=[...Array(7)].map((_,k)=>addDays(t,-k));
   const doneN=D.items.filter(i=>!i.repeat&&i.done&&i.doneAt&&days.includes(i.doneAt)).length+D.items.reduce((a,i)=>a+(i.doneDates||[]).filter(d=>days.includes(d)).length,0);
@@ -1598,7 +1615,11 @@ function spaces(){
 }
 const docRef=(sp,id)=>fb.doc(fbDb,'users',fbUser.uid,'mu_'+sp,String(id).replace(/\//g,'_'));
 let _rT=null;
-function scheduleRender(){clearTimeout(_rT);_rT=setTimeout(()=>{if(VIEW!=='notes'||!document.activeElement||document.activeElement.id!=='noteQ')render()},120)}
+function scheduleRender(){clearTimeout(_rT);_rT=setTimeout(()=>{
+  const a=document.activeElement;
+  // Хэрэглэгч ямар нэг талбарт бичиж байвал дахин зурахгүй — бичсэн текст арилна. Талбараас гармагц зурна.
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!a.closest('#sheet')){a.addEventListener('blur',()=>setTimeout(scheduleRender,50),{once:true});return}
+  render()},120)}
 function setFbState(s){fbState=s}
 function syncLabel(){
   if(!fbUser)return 'Мэдээлэл зөвхөн энэ төхөөрөмж дээр.';
@@ -1775,7 +1796,7 @@ window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
       const tasks=D.items.filter(i=>!i.time&&occurs(i,day)&&!isDone(i,day)).length;
       if(tasks)add(dt(day,'08:00'),'☀️ Өнөөдөр',tasks+' ажил хийх төлөвлөгөөтэй');
       // Оройн 2 минут
-      if(!(D.journal[day]&&D.journal[day].mood))add(dt(day,'21:00'),'✍️ Оройн 2 минут','Өнөөдөр ямар байв?');
+      if(!(D.journal[day]&&D.journal[day].mood))add(dt(day,'21:00'),'✍️ Оройн 2 минут','Өнөөдөр ямар байв? Дарж тэмдэглэл бичээрэй',{go:'journal'});
       // Тайлан
       const rr=D.settings.reportRemind;if(rr&&repActive()&&!repGet(day))add(dt(day,rr),'📋 Тайлан','Өнөөдөр аль өрөөнд хэдэн хүн оруулснаа бичих үү?');
       // Сарын сүүлийн өдөр: илүү цаг
@@ -1792,7 +1813,7 @@ window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
     const cancel=pending.filter(x=>x.id<SNOOZE_BASE).map(x=>({id:x.id}));
     if(cancel.length)await LN.cancel({notifications:cancel});
     const list=build().map((x,i)=>({id:1000+i,channelId:CH,title:x.title,body:x.body,schedule:{at:new Date(x.at),allowWhileIdle:true},autoCancel:true,
-      ...(x.med?{actionTypeId:MED,group:'med-'+x.extra.date+x.extra.key,extra:x.extra}:{})}));
+      ...(x.med?{actionTypeId:MED,group:'med-'+x.extra.date+x.extra.key,extra:x.extra}:x.extra?{extra:x.extra}:{})}));
     if(list.length)await LN.schedule({notifications:list});
   }
   async function onAction(ev){
@@ -1802,6 +1823,7 @@ window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
       else if(ev.actionId==='snooze'){await LN.schedule({notifications:[{id:SNOOZE_BASE+(Math.floor(Date.now()/1000)%90000),channelId:CH,title:'⏰ Эмээ уусан уу?',body:n.body||'',
         schedule:{at:new Date(Date.now()+SNOOZE_MIN*60000),allowWhileIdle:true},actionTypeId:MED,extra:ex,autoCancel:true}]});toast(SNOOZE_MIN+' минутын дараа дахин сануулна');try{App.minimizeApp()}catch(e){}}
       else if(ex.key){UI.life='health';setView('life')}
+      else if(ex.go==='journal')goJournal();
     }catch(e){console.warn(e)}
     resync();
   }
