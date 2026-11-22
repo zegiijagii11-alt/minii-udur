@@ -303,7 +303,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.7.1';
+const VERSION='1.7.2';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],contrastRooms:['CT','MRI'],reportRemind:'20:00'},notified:{}};
@@ -1483,7 +1483,7 @@ function openSettings(){
       <div class="btns" style="margin-top:8px"><button class="btn sm primary" onclick="exportBackup()">Нөөц авах</button><button class="btn sm" onclick="$('#restoreInput').click()">Сэргээх</button></div>
       <div class="small" style="margin-top:6px">Сүүлд нөөц авсан: ${s.lastBackup?dayLabel(s.lastBackup):'хэзээ ч'}</div></div>
     <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
-    <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}</div>`);
+    <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}${NAT?` · <button class="lnk" onclick="toast('Шалгаж байна…');NativeApp.otaCheck().then(()=>toast('Хамгийн сүүлийн хувилбар байна'))">Шинэчлэл шалгах</button>`:''}</div>`);
   $('#sTheme').value=s.theme;$('#sFs').value=String(s.fs||16);
   $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';s.rtLink=/^https?:\/\//.test($('#sRt').value.trim())?$('#sRt').value.trim():'';save();closeSheet();render()};
 }
@@ -1867,7 +1867,55 @@ window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
     catch(e){const m=String((e&&(e.message||e.code))||'');if(/cancel/i.test(m))return;showAuth(true,e&&e.code&&String(e.code).startsWith('auth/')?authErr(e):'Google нэвтрэлт амжилтгүй: '+m)}
   };
   const _logout=logout;logout=async function(){try{await FA.signOut()}catch(e){}return _logout()};
-  window.NativeApp={isNative:true,resync,shareFile,shareText,requestPermission};
+
+  /* ---- Автомат шинэчлэл: GitHub Pages-ээс шинэ хувилбарыг татаж, APK дахин суулгахгүйгээр ачаална ----
+     version.json: {"version":"1.7.3","minShell":2,"files":[...]}. minShell = шаардлагатай APK versionCode.
+     Шинэ хувилбар амжилттай эхэлсэн үед л байнгын болгоно (persist) — эвдэрсэн бол дараагийн нээлтэд хуучин руугаа буцна. */
+  const OTA_URL='https://zegiijagii11-alt.github.io/minii-udur/';
+  const WV=plug('WebView');
+  const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
+  let otaPath=null,otaLast=0;
+  async function otaConfirm(){ // энэ хувилбар амжилттай ачаалагдсан
+    try{const p=(await WV.getServerBasePath()).path||'';if(p.includes('/ota/')){await WV.persistServerBasePath()}
+      lsSet('mu.otaOk',VERSION);
+      if(lsGet('mu.otaNew')===VERSION){lsSet('mu.otaNew',null);toast('✓ Апп шинэчлэгдлээ — v'+VERSION)}}catch(e){}
+  }
+  async function otaCheck(){
+    if(otaCheck.busy||otaPath||Date.now()-otaLast<20*60000)return;otaCheck.busy=true;otaLast=Date.now();
+    try{
+      const m=await (await fetch(OTA_URL+'version.json?t='+Date.now(),{cache:'no-store'})).json();
+      const shell=+((await App.getInfo()).build)||0;
+      if(m.minShell&&shell<m.minShell){otaShellBanner(m);return}
+      if(vNum(m.version)<=vNum(VERSION))return;
+      if(lsGet('mu.otaTried')===m.version&&lsGet('mu.otaOk')!==m.version)return; // өмнө нь эхэлж чадаагүй хувилбар
+      const dir='ota/'+m.version;
+      for(const f of (m.files||['index.html'])){
+        const res=await fetch(OTA_URL+f+'?v='+m.version,{cache:'no-store'});if(!res.ok)throw new Error(f+' '+res.status);
+        if(/\.(html|webmanifest|json)$/.test(f)){const txt=await res.text();
+          if(f==='index.html'&&!txt.includes("const VERSION='"+m.version+"'"))throw new Error('version mismatch');
+          await FS.writeFile({path:dir+'/'+f,data:txt,directory:'DATA',encoding:'utf8',recursive:true})}
+        else{const data=(await blobToDataURL(await res.blob())).split(',')[1];await FS.writeFile({path:dir+'/'+f,data,directory:'DATA',recursive:true})}
+      }
+      const uri=(await FS.getUri({path:dir,directory:'DATA'})).uri;
+      otaPath=decodeURIComponent(uri.replace(/^file:\/\//,''));lsSet('mu.otaNew',m.version);lsSet('mu.otaTried',m.version);
+      otaApply();
+    }catch(e){console.warn('OTA',e)}finally{otaCheck.busy=false}
+  }
+  function otaApply(){ // бичиж байх эсвэл цонх нээлттэй үед хүлээнэ
+    if(!otaPath)return;const a=document.activeElement;
+    if(!$('#sheet').classList.contains('hidden')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))){setTimeout(otaApply,4000);return}
+    saveLocal();WV.setServerBasePath({path:otaPath});
+  }
+  function otaShellBanner(m){
+    if(document.getElementById('otaBan'))return;const b=document.createElement('div');b.id='otaBan';
+    b.style.cssText='position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;background:var(--acc,#5b8c7b);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;gap:10px;align-items:center';
+    b.innerHTML='<span style="flex:1">Аппын шинэ суулгац гарсан (v'+esc(m.version)+'). Татаж суулгана уу.</span><button style="background:#fff;color:#2f5247;border:0;border-radius:10px;padding:8px 12px;font-weight:600">Татах</button><button aria-label="Хаах" style="background:none;border:0;color:#fff;font-size:18px">×</button>';
+    b.children[1].onclick=()=>{location.href=OTA_URL+(m.apk||'apk/miniy-udur.apk')};b.children[2].onclick=()=>b.remove();document.body.appendChild(b);
+  }
+  App.addListener('resume',()=>otaCheck());
+  window.addEventListener('load',()=>{setTimeout(otaConfirm,3000);setTimeout(otaCheck,1500)});
+
+  window.NativeApp={isNative:true,resync,shareFile,shareText,requestPermission,otaCheck:()=>{otaLast=0;return otaCheck()}};
   window.addEventListener('load',setup);
 })();
 
