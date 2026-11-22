@@ -303,7 +303,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 
 <script>
 /* ===================== Өгөгдөл ===================== */
-const VERSION='1.7.4';
+const VERSION='1.7.5';
 const KEY='miniiudur.v1';
 const DEF={items:[],notes:[],tx:[],bills:[],budget:0,meds:[],medLog:{},health:[],water:{},habits:[],habitLog:{},shopping:[],chores:[],journal:{},
   ot:[],reports:[],settings:{name:'',theme:'auto',fs:16,notify:false,waterGoal:8,otRate:0,shiftLink:'',rooms:['CT','MRI','Рентген'],contrastRooms:['CT','MRI'],reportRemind:'20:00'},notified:{}};
@@ -1483,7 +1483,7 @@ function openSettings(){
       <div class="btns" style="margin-top:8px"><button class="btn sm primary" onclick="exportBackup()">Нөөц авах</button><button class="btn sm" onclick="$('#restoreInput').click()">Сэргээх</button></div>
       <div class="small" style="margin-top:6px">Сүүлд нөөц авсан: ${s.lastBackup?dayLabel(s.lastBackup):'хэзээ ч'}</div></div>
     <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
-    <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}${NAT?` · <button class="lnk" onclick="toast('Шалгаж байна…');NativeApp.otaCheck().then(r=>toast(r==='ready'?'Шинэ хувилбар татлаа — цонхыг хаахад шинэчлэгдэнэ':r==='latest'?'Хамгийн сүүлийн хувилбар байна':r==='shell'?'Шинэ APK суулгах шаардлагатай':'Шинэчилж чадсангүй: '+r))">Шинэчлэл шалгах</button>`:''}</div>`);
+    <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}${NAT?` · <button class="lnk" onclick="toast('Шалгаж байна…');NativeApp.otaCheck().then(r=>toast(r==='ready'?'Шинэ хувилбар татлаа — цонхыг хаахад шинэчлэгдэнэ':r==='latest'?'Хамгийн сүүлийн хувилбар байна':r==='shell'?'Шинэ APK суулгах шаардлагатай':'Шинэчилж чадсангүй: '+r))">Шинэчлэл шалгах</button><details style="margin-top:6px;text-align:left"><summary>Шинэчлэлийн бүртгэл</summary><pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 0">${esc(window.otaLogText?otaLogText():'')}</pre></details>`:''}</div>`);
   $('#sTheme').value=s.theme;$('#sFs').value=String(s.fs||16);
   $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';s.rtLink=/^https?:\/\//.test($('#sRt').value.trim())?$('#sRt').value.trim():'';save();closeSheet();render()};
 }
@@ -1875,16 +1875,19 @@ window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
   const WV=plug('WebView');
   const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
   let otaPath=null,otaLast=0;
+  const otaLog=m=>{const L=lsGet('mu.otaLog')||[];L.push(new Date().toTimeString().slice(0,8)+' '+m);lsSet('mu.otaLog',L.slice(-10))};
+  window.otaLogText=()=>(lsGet('mu.otaLog')||[]).join(String.fromCharCode(10));
   async function otaConfirm(){ // энэ хувилбар амжилттай ачаалагдсан
-    try{const p=(await WV.getServerBasePath()).path||'';if(p.includes('/ota/')){await WV.persistServerBasePath()}
+    try{const p=(await WV.getServerBasePath()).path||'';otaLog('ачаалсан v'+VERSION+' ← '+(p.includes('/ota/')?'ota':'суулгац'));if(p.includes('/ota/')){await WV.persistServerBasePath();otaLog('байнгын болгосон')}
       lsSet('mu.otaOk',VERSION);
       if(lsGet('mu.otaNew')===VERSION){lsSet('mu.otaNew',null);toast('✓ Апп шинэчлэгдлээ — v'+VERSION)}}catch(e){}
   }
   async function otaCheck(){
     if(otaPath)return 'ready';if(otaCheck.busy||Date.now()-otaLast<60000)return 'busy';otaCheck.busy=true;otaLast=Date.now();
     try{
+      otaLog('шалгаж байна (v'+VERSION+')');
       const m=await (await fetch(OTA_URL+'version.json?t='+Date.now(),{cache:'no-store'})).json();
-      const shell=+((await App.getInfo()).build)||0;
+      const shell=+((await App.getInfo()).build)||0;otaLog('GitHub: v'+m.version+', APK '+shell+'/'+(m.minShell||0));
       if(m.minShell&&shell<m.minShell){otaShellBanner(m);return 'shell'}
       if(vNum(m.version)<=vNum(VERSION))return 'latest';
       if(lsGet('mu.otaTried')===m.version&&lsGet('mu.otaOk')!==m.version&&!otaCheck.force)return 'skipped'; // өмнө нь эхэлж чадаагүй хувилбар
@@ -1896,15 +1899,16 @@ window.addEventListener('online',()=>{if(fbReconciled)cloudPush()});
           await FS.writeFile({path:dir+'/'+f,data:txt,directory:'DATA',encoding:'utf8',recursive:true})}
         else{const data=(await blobToDataURL(await res.blob())).split(',')[1];await FS.writeFile({path:dir+'/'+f,data,directory:'DATA',recursive:true})}
       }
+      otaLog('татсан '+(m.files||[]).length+' файл');
       const uri=(await FS.getUri({path:dir,directory:'DATA'})).uri;
       otaPath=decodeURIComponent(uri.replace(/^file:\/\//,''));lsSet('mu.otaNew',m.version);lsSet('mu.otaTried',m.version);
       otaApply();return 'ready';
-    }catch(e){console.warn('OTA',e);return 'error: '+(e&&e.message||e)}finally{otaCheck.busy=false;otaCheck.force=false}
+    }catch(e){console.warn('OTA',e);otaLog('АЛДАА: '+(e&&e.message||e));return 'error: '+(e&&e.message||e)}finally{otaCheck.busy=false;otaCheck.force=false}
   }
   function otaApply(){ // бичиж байх эсвэл цонх нээлттэй үед хүлээнэ
     if(!otaPath)return;const a=document.activeElement;
-    if(!$('#sheet').classList.contains('hidden')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))){setTimeout(otaApply,4000);return}
-    saveLocal();WV.setServerBasePath({path:otaPath});
+    if(!$('#sheet').classList.contains('hidden')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))){if(!otaApply.w){otaApply.w=1;otaLog('цонх хаагдахыг хүлээж байна')}setTimeout(otaApply,4000);return}
+    saveLocal();otaLog('ачаалж байна: '+otaPath);WV.setServerBasePath({path:otaPath}).catch(e=>otaLog('АЛДАА setServerBasePath: '+(e&&e.message||e)));
   }
   function otaShellBanner(m){
     if(document.getElementById('otaBan'))return;const b=document.createElement('div');b.id='otaBan';

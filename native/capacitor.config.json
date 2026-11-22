@@ -3,7 +3,8 @@
   "appName": "Миний өдөр",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#f6f4ef"
+    "backgroundColor": "#f6f4ef",
+    "webContentsDebuggingEnabled": true
   },
   "plugins": {
     "LocalNotifications": {
@@ -12,7 +13,9 @@
     },
     "FirebaseAuthentication": {
       "skipNativeAuth": true,
-      "providers": ["google.com"]
+      "providers": [
+        "google.com"
+      ]
     }
   }
 }
