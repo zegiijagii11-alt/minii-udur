@@ -109,7 +109,7 @@
   const OTA_URL='https://zegiijagii11-alt.github.io/minii-udur/';
   const WV=plug('WebView');
   const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
-  let otaPath=null,otaLast=0;
+  let otaPath=null,otaVer='',otaLast=0;
   const otaLog=m=>{const L=lsGet('mu.otaLog')||[];L.push(new Date().toTimeString().slice(0,8)+' '+m);lsSet('mu.otaLog',L.slice(-10))};
   window.otaLogText=()=>(lsGet('mu.otaLog')||[]).join(String.fromCharCode(10));
   async function otaConfirm(){ // энэ хувилбар амжилттай ачаалагдсан
@@ -125,7 +125,7 @@
       const shell=+((await App.getInfo()).build)||0;otaLog('GitHub: v'+m.version+', APK '+shell+'/'+(m.minShell||0));
       if(m.minShell&&shell<m.minShell){otaShellBanner(m);return 'shell'}
       if(vNum(m.version)<=vNum(VERSION))return 'latest';
-      if(lsGet('mu.otaTried')===m.version&&lsGet('mu.otaOk')!==m.version&&!otaCheck.force)return 'skipped'; // өмнө нь эхэлж чадаагүй хувилбар
+      const tr=lsGet('mu.otaTries')||{};if(tr.v===m.version&&tr.n>=3&&lsGet('mu.otaOk')!==m.version&&!otaCheck.force){otaLog('алгассан: 3 удаа эхэлж чадаагүй');return 'skipped'}
       const dir='ota/'+m.version;
       for(const f of (m.files||['index.html'])){
         const res=await fetch(OTA_URL+f+'?v='+m.version,{cache:'no-store'});if(!res.ok)throw new Error(f+' '+res.status);
@@ -136,13 +136,15 @@
       }
       otaLog('татсан '+(m.files||[]).length+' файл');
       const uri=(await FS.getUri({path:dir,directory:'DATA'})).uri;
-      otaPath=decodeURIComponent(uri.replace(/^file:\/\//,''));lsSet('mu.otaNew',m.version);lsSet('mu.otaTried',m.version);
+      otaPath=decodeURIComponent(uri.replace(/^file:\/\//,''));otaVer=m.version;
       otaApply();return 'ready';
     }catch(e){console.warn('OTA',e);otaLog('АЛДАА: '+(e&&e.message||e));return 'error: '+(e&&e.message||e)}finally{otaCheck.busy=false;otaCheck.force=false}
   }
   function otaApply(){ // бичиж байх эсвэл цонх нээлттэй үед хүлээнэ
     if(!otaPath)return;const a=document.activeElement;
     if(!$('#sheet').classList.contains('hidden')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))){if(!otaApply.w){otaApply.w=1;otaLog('цонх хаагдахыг хүлээж байна')}setTimeout(otaApply,4000);return}
+    // Зөвхөн бодитоор ачаалах үед тоолно — татаад аппыг хаасан бол дараагийн нээлтэд дахин оролдоно
+    const tr=lsGet('mu.otaTries')||{};lsSet('mu.otaTries',{v:otaVer,n:tr.v===otaVer?tr.n+1:1});lsSet('mu.otaNew',otaVer);
     saveLocal();otaLog('ачаалж байна: '+otaPath);WV.setServerBasePath({path:otaPath}).catch(e=>otaLog('АЛДАА setServerBasePath: '+(e&&e.message||e)));
   }
   function otaShellBanner(m){
