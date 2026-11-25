@@ -257,3 +257,18 @@ main{padding:0 16px 72px;max-width:720px;margin:0 auto}
 details summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
 .small{font-size:.8rem;color:var(--muted)}
 .big{font-size:1.6rem;font-weight:700}
+.roswrap{--rl:color-mix(in srgb,var(--text) 62%,var(--card));overflow:auto;max-height:68vh;border:1.5px solid var(--rl);border-radius:12px;background:var(--card)}
+.ros{border-collapse:separate;border-spacing:0;font-size:.95rem;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+.ros td{border-right:1px solid var(--rl);border-bottom:1px solid var(--rl);padding:6px 6px;text-align:center;white-space:nowrap;min-width:32px}
+.ros .hd td{position:sticky;top:0;z-index:2;background:var(--card);font-weight:700;border-bottom-width:2px}
+.ros td.nm{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;font-weight:600;border-right-width:2px}
+.ros .hd td.nm{z-index:3}
+.ros td.td{background:#1f5fe0!important;color:#fff!important;font-weight:800;box-shadow:inset 0 -5px var(--c,transparent)}
+.ros .hd td.td,.ros td.vt.td{background:#0f3fa8!important;box-shadow:none}
+.ros .hd td.td{font-size:1.1em}
+.ros thead{position:sticky;top:0;z-index:2}
+.ros thead td{background:var(--card);font-weight:700}
+.ros thead td.nm{z-index:3}
+.ros td.nm.td{box-shadow:none}
+.ros td.vt{writing-mode:vertical-rl;transform:rotate(180deg);padding:6px 2px;min-width:0}
+.rtsheet thead td.nm{white-space:normal;max-width:92px;font-size:.66rem;overflow-wrap:anywhere}

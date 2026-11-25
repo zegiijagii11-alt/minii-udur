@@ -8,17 +8,17 @@ function render(){
   const th=D.settings.theme;if(th==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=th;
   applyAccent();
   if(VIEW==='grp'&&!groups()[UI.grp])VIEW='home';
-  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='ot'?'Илүү цаг':VIEW==='report'?'Тайлан':VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
+  $('#title').textContent=UI.back?UI.subTitle:VIEW==='grp'?groups()[UI.grp].l:VIEW==='ot'?'Илүү цаг':VIEW==='report'?'Тайлан':VIEW==='roster'?'Ээлжийн хуваарь':VIEW==='rt'?'RT exam CT':VIEW==='life'?({health:'Эрүүл мэнд',habits:'Зуршил',home:'Ахуй'})[UI.life]:VIEW_TITLES[VIEW];
   const inGrp=VIEW==='grp'||!!UI.back;
   $('#navBtn').innerHTML=`<svg viewBox="0 0 24 24">${inGrp?TILE_ICONS.back:'<path d="M4 7h16M4 12h16M4 17h16"/>'}</svg>`;
   $('#navBtn').setAttribute('aria-label',inGrp?'Буцах':'Цэс');
   $('#navBtn').onclick=inGrp?(UI.back?goBack:()=>setView('home')):openMenu;
   const bn=bellItems().length;$('#bellN').textContent=bn>99?'99+':bn;$('#bellN').classList.toggle('hidden',!bn);
   const navOn=VIEW==='grp'||UI.back?'home':VIEW;
-  $('.fab').classList.toggle('hidden',VIEW==='money'&&!UI.sec); // санхүүд өөрийн −/+ товч бий
+  $('.fab').classList.toggle('hidden',(VIEW==='money'&&!UI.sec)||VIEW==='roster'||VIEW==='rt'); // санхүүд өөрийн −/+ товч бий
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===navOn));
-  $('#view').innerHTML=({home:vHome,grp:vGroup,ot:vOT,report:vReport,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
-  hydrateImgs($('#view'));
+  $('#view').innerHTML=({home:vHome,grp:vGroup,ot:vOT,report:vReport,roster:vRoster,rt:vRt,today:vToday,plan:vPlan,notes:vNotes,money:vMoney,life:vLife})[VIEW]();
+  hydrateImgs($('#view'));if(VIEW==='roster')rosterAfter();if(VIEW==='rt')rtAfter();
   if(VIEW==='notes'){const q=$('#noteQ');if(q&&UI._focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
 }
 
@@ -91,8 +91,8 @@ function groups(){
   return {
     ajil:{l:'Ажил',ic:'ajil',subs:[
       {k:'today',l:'Ажлын төлөвлөгөө',n:pend('ajil'),go:()=>goPlan('ajil')},
-      {k:'scan',l:'RT exam CT ↗',act:()=>window.open(rtLink(),'_blank')},
-      {k:'link',l:'Ээлжийн хуваарь ↗',act:()=>window.open(shiftLink(),'_blank')},
+      rosterOn()?{k:'scan',l:'RT exam CT',go:()=>openRt()}:{k:'scan',l:'RT exam CT ↗',act:()=>window.open(rtLink(),'_blank')},
+      {k:'link',l:'Ээлжийн хуваарь',go:()=>openRoster()},
       {k:'scan',l:'Тайлан',n:reportMissing(),go:()=>{UI.repDay=null;setView('report')}},
       {k:'clock',l:'Илүү цаг',go:()=>{UI.otMonth=null;setView('ot')}},
       {k:'plus',l:'Ажил нэмэх',act:()=>itemForm(null,{cat:'ajil',date:today()})},
@@ -297,7 +297,7 @@ function openMenu(){
       ${row('today','Өнөөдөр',"setView('today')")}
       ${Object.entries(groups()).map(([k,g])=>row(g.ic,g.l,`openGroup('${k}')`,sumN(g))).join('')}
       <div class="dr-sec">Бусад</div>
-      ${row('search','Хайх','openSearch()')}${row('scan','RT exam CT ↗',"window.open(rtLink(),'_blank')")}${row('link','Ээлжийн хуваарь ↗',"window.open(shiftLink(),'_blank')")}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
+      ${row('search','Хайх','openSearch()')}${rosterOn()?row('scan','RT exam CT','openRt()'):row('scan','RT exam CT ↗',"window.open(rtLink(),'_blank')")}${row('link','Ээлжийн хуваарь','openRoster()')}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
     </div>`;
   $('#drawer').classList.remove('hidden');
 }

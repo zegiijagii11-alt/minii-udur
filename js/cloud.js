@@ -6,6 +6,8 @@ const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
 const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot','reports'];
 const META_SET=['name','avatar','waterGoal','otRate','shiftLink','rtLink','rooms','contrastRooms','reportRemind'];
+// Хүснэгтийн холболт: тусдаа баримт. mu_meta-д байвал v1.8.1 ба түүнээс өмнөх хувилбар (энэ түлхүүрүүдийг мэдэхгүй) буцааж бичихдээ арилгадаг.
+const SHEET_SET=['rosterUrl','rosterKey','rosterName','rosterMode'];
 const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -52,6 +54,9 @@ function spaces(){
   S.push({name:'meta',
     local:()=>{const s={};META_SET.forEach(k=>{const v=D.settings[k];if(v!==undefined&&v!==''&&v!==null)s[k]=v});return new Map([['main',{id:'main',budget:D.budget||0,s}]])},
     apply:(id,o)=>{if(!o)return;D.budget=o.budget||0;META_SET.forEach(k=>{D.settings[k]=o.s&&o.s[k]!==undefined?o.s[k]:DEF.settings[k]})}});
+  S.push({name:'sheet',
+    local:()=>{const s={};SHEET_SET.forEach(k=>{if(D.settings[k])s[k]=D.settings[k]});return new Map(Object.keys(s).length?[['main',{id:'main',s}]]:[])},
+    apply:(id,o)=>{SHEET_SET.forEach(k=>{if(o&&o.s&&o.s[k])D.settings[k]=o.s[k];else delete D.settings[k]})}});
   return S;
 }
 const docRef=(sp,id)=>fb.doc(fbDb,'users',fbUser.uid,'mu_'+sp,String(id).replace(/\//g,'_'));
@@ -161,7 +166,7 @@ function onUser(u){
 }
 function wipeLocal(){
   D=JSON.parse(JSON.stringify(DEF));SY={};saveLocal();
-  [SY_KEY,UP_KEY,KEY+'.view'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+  [SY_KEY,UP_KEY,KEY+'.view',KEY+'.roster',KEY+'.rt'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
   IMGURL.forEach(u=>URL.revokeObjectURL(u));IMGURL.clear();idbDo('readwrite',s=>s.clear()).catch(()=>{});
 }
 function fbToggle(){fbSignUp=!fbSignUp;$('#aSubmit').textContent=fbSignUp?'Бүртгүүлэх':'Нэвтрэх';$('#aToggle').textContent=fbSignUp?'Бүртгэлтэй юу? Нэвтрэх':'Бүртгэл үүсгэх';

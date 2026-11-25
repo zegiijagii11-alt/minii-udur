@@ -8,6 +8,8 @@ function openSettings(){
     <div class="fld"><label>Аппын өнгө</label><div class="swatches">${ACCENTS.map(([c,n])=>`<button type="button" title="${n}" aria-label="${n}" data-c="${c}" class="${(s.accent||'#5b8c7b').toLowerCase()===c?'on':''}" style="background:${c}" onclick="pickAccent('${c}')"></button>`).join('')}<label class="cust" title="Өөр өнгө"><input type="color" value="${esc(s.accent||'#5b8c7b')}" oninput="pickAccent(this.value)"></label></div></div>
     <div class="fld"><label>Өдрийн усны зорилго (аяга)</label><input id="sWater" type="number" value="${s.waterGoal||8}"></div>
     <div class="fld"><label>Ээлжийн хуваарийн холбоос</label><input id="sShift" value="${esc(s.shiftLink||'')}" placeholder="${esc(SHEET_LINK)}"></div>
+    <div class="fld"><label>Хуваарь: Apps Script холбоос</label><input id="sRosUrl" value="${esc(s.rosterUrl||'')}" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="fld"><label>Хуваарь: түлхүүр</label><input id="sRosKey" value="${esc(s.rosterKey||'')}" autocomplete="off"></div>
     <div class="fld"><label>RT exam CT хүснэгтийн холбоос</label><input id="sRt" value="${esc(s.rtLink||'')}" placeholder="${esc(RT_LINK)}"></div>
     <div class="card" style="margin-top:6px"><h2>Сануулга</h2><div class="small">${perm==='granted'&&s.notify?(NAT?'Асаалттай. Апп хаалттай, утас түгжээтэй үед ч цагтаа ирнэ.':'Асаалттай. Одоогоор апп нээлттэй (эсвэл ард нь ажиллаж) байхад сануулна.'):perm==='denied'?'Хөтөч дээр сануулга хаагдсан байна — хөтчийн тохиргооноос зөвшөөрнө үү.':'Унтраалттай.'}</div>
       <div class="btns" style="margin-top:8px"><button class="btn sm" onclick="enableNotify()">${s.notify?'Дахин шалгах':'Асаах'}</button>${s.notify?'<button class="btn sm ghost" onclick="D.settings.notify=false;save();openSettings()">Унтраах</button>':''}</div></div>
@@ -19,7 +21,7 @@ function openSettings(){
     <div class="row-btns"><button class="btn sm danger ghost" onclick="wipeAll()">Бүгдийг устгах</button><span class="sp"></span><button class="btn primary" id="sSave">Хадгалах</button></div>
     <div class="small" style="text-align:center;margin-top:10px">Миний өдөр v${VERSION}${NAT?` · <button class="lnk" onclick="toast('Шалгаж байна…');NativeApp.otaCheck().then(r=>toast(r==='ready'?'Шинэ хувилбар татлаа — цонхыг хаахад шинэчлэгдэнэ':r==='latest'?'Хамгийн сүүлийн хувилбар байна':r==='shell'?'Шинэ APK суулгах шаардлагатай':'Шинэчилж чадсангүй: '+r))">Шинэчлэл шалгах</button><details style="margin-top:6px;text-align:left"><summary>Шинэчлэлийн бүртгэл</summary><pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 0">${esc(window.otaLogText?otaLogText():'')}</pre></details>`:''}</div>`);
   $('#sTheme').value=s.theme;$('#sFs').value=String(s.fs||16);
-  $('#sSave').onclick=()=>{s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';s.rtLink=/^https?:\/\//.test($('#sRt').value.trim())?$('#sRt').value.trim():'';save();closeSheet();render()};
+  $('#sSave').onclick=()=>{const ru=$('#sRosUrl').value.trim(),rk=$('#sRosKey').value.trim();if(ru&&!rosterUrlOk(ru)){toast('Apps Script холбоос /exec гэж төгсөх ёстой');return}if(ru!==(s.rosterUrl||'')||rk!==(s.rosterKey||'')){s.rosterUrl=ru;s.rosterKey=rk;rosLast=0;rosterClear()}s.name=$('#sName').value.trim();s.theme=$('#sTheme').value;s.fs=+$('#sFs').value;s.waterGoal=Math.max(1,Math.min(20,+$('#sWater').value||8));s.shiftLink=/^https?:\/\//.test($('#sShift').value.trim())?$('#sShift').value.trim():'';s.rtLink=/^https?:\/\//.test($('#sRt').value.trim())?$('#sRt').value.trim():'';save();closeSheet();render()};
 }
 async function enableNotify(){
   if(window.NativeApp&&NativeApp.isNative){const g=await NativeApp.requestPermission();D.settings.notify=g;save();if(g)toast('✓ Сануулга асаалттай — апп хаалттай үед ч ирнэ');openSettings();return}
@@ -50,4 +52,4 @@ function importBackup(ev){
     catch(e){alert('Энэ файл “Миний өдөр”-ийн нөөц биш байна.')}};
   r.readAsText(f);
 }
-function wipeAll(){if(!confirm('Бүх мэдээллийг устгах уу? Буцаах боломжгүй.'))return;if(!confirm('Үнэхээр итгэлтэй байна уу?'))return;D=JSON.parse(JSON.stringify(DEF));save();closeSheet();render()}
+function wipeAll(){if(!confirm('Бүх мэдээллийг устгах уу? Буцаах боломжгүй.'))return;if(!confirm('Үнэхээр итгэлтэй байна уу?'))return;D=JSON.parse(JSON.stringify(DEF));rosterClear();save();closeSheet();render()}
