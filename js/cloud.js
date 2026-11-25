@@ -27,7 +27,7 @@ function reconcileSpace(sp,cloud,sy){
       else{ops.push(['set',id,L]);sy[id]=lj}}                         // энд өөрчилсөн → энэ төхөөрөмжийнх
     else if(L){if(s!==undefined&&lj===s){sp.apply(id,null);delete sy[id]}   // өөр төхөөрөмж дээр устгасан
       else{ops.push(['set',id,L]);sy[id]=lj}}                         // шинээр нэмсэн
-    else if(C){if(s!==undefined&&cj===s){ops.push(['del',id]);delete sy[id]} // энд устгасан
+    else if(C){if(s!==undefined&&cj===s&&!sp.keep){ops.push(['del',id]);delete sy[id]} // энд устгасан
       else{sp.apply(id,C);sy[id]=cj}}                                  // өөр төхөөрөмж дээр нэмсэн
     else delete sy[id];
   });
@@ -37,7 +37,7 @@ function reconcileSpace(sp,cloud,sy){
 function diffSpace(sp,sy){
   const loc=sp.local(),ops=[];
   loc.forEach((L,id)=>{const lj=stable(clean(L));if(sy[id]!==lj){ops.push(['set',id,L]);sy[id]=lj}});
-  Object.keys(sy).forEach(id=>{if(!loc.has(id)){ops.push(['del',id]);delete sy[id]}});
+  Object.keys(sy).forEach(id=>{if(!loc.has(id)&&!sp.keep){ops.push(['del',id]);delete sy[id]}});
   return ops;
 }
 // SYNC-END
@@ -54,9 +54,10 @@ function spaces(){
   S.push({name:'meta',
     local:()=>{const s={};META_SET.forEach(k=>{const v=D.settings[k];if(v!==undefined&&v!==''&&v!==null)s[k]=v});return new Map([['main',{id:'main',budget:D.budget||0,s}]])},
     apply:(id,o)=>{if(!o)return;D.budget=o.budget||0;META_SET.forEach(k=>{D.settings[k]=o.s&&o.s[k]!==undefined?o.s[k]:DEF.settings[k]})}});
-  S.push({name:'sheet',
-    local:()=>{const s={};SHEET_SET.forEach(k=>{if(D.settings[k])s[k]=D.settings[k]});return new Map(Object.keys(s).length?[['main',{id:'main',s}]]:[])},
-    apply:(id,o)=>{SHEET_SET.forEach(k=>{if(o&&o.s&&o.s[k])D.settings[k]=o.s[k];else delete D.settings[k]})}});
+  // keep: энэ төхөөрөмж дээр алга болсон нь «устгасан» гэсэн үг биш (хуучин хувилбартай таб дарж бичсэн байж болно) → үүлнээс сэргээнэ. Салгахад rosterOff тэмдэглэнэ.
+  S.push({name:'sheet',keep:true,
+    local:()=>{const s={};SHEET_SET.forEach(k=>{if(D.settings[k])s[k]=D.settings[k]});if(D.settings.rosterOff)s.off=1;return new Map(s.off||s.rosterUrl?[['main',{id:'main',s}]]:[])},
+    apply:(id,o)=>{SHEET_SET.forEach(k=>{if(o&&o.s&&o.s[k])D.settings[k]=o.s[k];else delete D.settings[k]});if(o&&o.s&&o.s.off)D.settings.rosterOff=true;else delete D.settings.rosterOff}});
   return S;
 }
 const docRef=(sp,id)=>fb.doc(fbDb,'users',fbUser.uid,'mu_'+sp,String(id).replace(/\//g,'_'));
@@ -108,7 +109,7 @@ function cloudSubscribe(){
       snap.docChanges().forEach(c=>{
         if(c.doc.metadata.hasPendingWrites)return; // өөрийн бичилт
         const o=c.doc.data();const id=String(o&&o.id!=null?o.id:c.doc.id);
-        if(c.type==='removed'){const L=sp.local().get(id);if(L&&stable(clean(L))===sy[id]){sp.apply(id,null);ch=true}delete sy[id];return}
+        if(c.type==='removed'){const L=sp.local().get(id);if(!sp.keep&&L&&stable(clean(L))===sy[id]){sp.apply(id,null);ch=true}delete sy[id];return}
         const j=stable(o);if(sy[id]===j)return;sp.apply(id,o);sy[id]=j;ch=true;
       });
       if(ch){lsSet(SY_KEY,SY);saveLocal();scheduleRender()}

@@ -102,7 +102,7 @@ function vRoster(){
 // Нэг мөр: <Apps Script URL>?key=<түлхүүр>
 function rosterConnect(){const m=$('#rosLink').value.trim().match(/^(https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec)\?key=([\w-]+)$/);
   if(!m){toast('Хаяг буруу байна');return}
-  D.settings.rosterUrl=m[1];D.settings.rosterKey=m[2];rosterClear();rosLast=0;save();render();rosterFetch(true)}
+  D.settings.rosterUrl=m[1];D.settings.rosterKey=m[2];delete D.settings.rosterOff;rosterClear();rosLast=0;save();render();rosterFetch(true)}
 function rosterTab(k){const s=rosterSheets()[k];if(!s)return;UI.rosTab=s.name;UI.rosPos=null;render()}
 // Дахин зурахад гүйлгэсэн байрыг хадгална; эхэнд өнөөдрийн багана руу гүйлгэнэ
 function rosterAfter(){
