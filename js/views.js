@@ -86,7 +86,7 @@ function groups(){
   const t=today();
   const pend=c=>D.items.filter(i=>i.cat===c&&((occurs(i,t)&&!isDone(i,t))||isOverdue(i))).length;
   const upA=D.items.filter(i=>i.appt&&!i.done&&i.date>=t&&diffDays(t,i.date)<=7).length;
-  const medLeft=D.meds.reduce((a,m)=>a+(m.times||[]).filter(x=>!(D.medLog[t]||{})[m.id+'@'+x]).length,0);
+  const medLeft=medDoses(t).filter(({m,x})=>!(D.medLog[t]||{})[m.id+'@'+x]).length;
   const shop=D.shopping.filter(x=>!x.done).length,chores=D.chores.filter(c=>choreDays(c)<=0).length,hab=D.habits.filter(h=>!(D.habitLog[t]||{})[h.id]).length;
   return {
     ajil:{l:'Ажил',ic:'ajil',subs:[
@@ -315,7 +315,7 @@ function bellItems(){
   const n=now(),t=today(),tm=addDays(t,1),mins=n.getHours()*60+n.getMinutes(),out=[];
   D.items.forEach(i=>{if(!i.time)return;[t,tm].forEach(day=>{if(!occurs(i,day)||isDone(i,day))return;if(day===t&&toMin(i.time)<mins-30)return;
     out.push({at:day+' '+i.time,ic:i.appt?(APPT[i.appt]||APPT.other).i:'📅',t:i.title,s:dayLabel(day)+' '+i.time+(i.place?' · '+i.place:''),fn:`itemForm('${i.id}')`})})});
-  D.meds.forEach(m=>(m.times||[]).forEach(x=>{if(!(D.medLog[t]||{})[m.id+'@'+x])out.push({at:t+' '+x,ic:'💊',t:m.name,s:'Өнөөдөр '+x+(toMin(x)<mins?' · уугаагүй':''),fn:"goLife('health')"})}));
+  medDoses(t).forEach(({m,x})=>{if(!(D.medLog[t]||{})[m.id+'@'+x])out.push({at:t+' '+x,ic:'💊',t:m.name,s:'Өнөөдөр '+x+(toMin(x)<mins?' · уугаагүй':''),fn:"goLife('health')"})});
   D.items.filter(i=>i.appt&&!i.done&&i.date>tm&&diffDays(t,i.date)<=7).forEach(i=>out.push({at:i.date+' '+(i.time||''),ic:(APPT[i.appt]||APPT.other).i,t:i.title,s:dayLabel(i.date)+(i.time?' '+i.time:''),fn:`itemForm('${i.id}')`}));
   billsDue(3).forEach(b=>out.push({at:t+' 00',ic:'🧾',t:b.name+' — '+money(b.amount),s:b.days<0?(-b.days)+' хоног хэтэрсэн':b.days===0?'Өнөөдөр төлөх':b.days+' хоногийн дараа',fn:"setView('money')"}));
   return out.sort((a,b)=>a.at.localeCompare(b.at));

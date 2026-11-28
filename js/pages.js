@@ -20,12 +20,12 @@ function vToday(){
   }
 
   // Эм
-  if(D.meds.length){
+  if(medDoses(t).length){
     const log=D.medLog[t]||{};const doses=[];
-    D.meds.forEach(m=>(m.times||[]).forEach(tm=>doses.push({m,tm})));doses.sort((a,b)=>a.tm.localeCompare(b.tm));
+    medDoses(t).forEach(({m,x})=>doses.push({m,tm:x}));
     const taken=doses.filter(x=>log[x.m.id+'@'+x.tm]).length;
     out+=`<div class="card"><h2>Эм<span class="sp"></span><span class="tag ${taken===doses.length?'ok':''}">${taken}/${doses.length}</span></h2>`+
-      doses.map(x=>{const k=x.m.id+'@'+x.tm;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}')"><span class="tm">${x.tm}</span><div class="main"><div class="ttl">${esc(x.m.name)}</div>${x.m.dose?`<div class="meta">${esc(x.m.dose)}</div>`:''}</div></div>`}).join('')+`</div>`;
+      doses.map(x=>{const k=x.m.id+'@'+x.tm;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}')"><span class="tm">${x.tm}</span><div class="main"><div class="ttl">${esc(x.m.name)}</div>${x.m.dose||x.m.days?`<div class="meta">${[esc(x.m.dose||''),medCourse(x.m,t)].filter(Boolean).join(' · ')}</div>`:''}</div></div>`}).join('')+`</div>`;
   }
   // Зуршил + ус
   if(D.habits.length){
@@ -280,7 +280,7 @@ function vLife(){
     if(!UI.sec)out+=healthReport();
     if(UI.sec==='meds'){
     out+=`<div class="card"><h2>Эм<span class="sp"></span><button class="lnk" onclick="medForm(null)">+ нэмэх</button></h2>`;
-    out+=D.meds.length?D.meds.map(m=>`<div class="row"><div class="main" onclick="medForm('${m.id}')"><div class="ttl">${esc(m.name)}${m.dose?` <span class="small">${esc(m.dose)}</span>`:''}</div><div class="meta">⏰ ${(m.times||[]).join(', ')||'цаггүй'} · ${medStreak(m)} өдөр бүрэн</div></div></div>`).join('')
+    out+=D.meds.length?D.meds.map(m=>`<div class="row"><div class="main" onclick="medForm('${m.id}')"><div class="ttl">${esc(m.name)}${m.dose?` <span class="small">${esc(m.dose)}</span>`:''}</div><div class="meta">⏰ ${(m.times||[]).length} удаа: ${(m.times||[]).join(', ')||'цаггүй'}</div><div class="meta">${medCourse(m,today())||'тогтмол'} · ${medStreak(m)} өдөр бүрэн${medRep(m)?' · 🔔 '+medRep(m)+' мин тутам':''}</div></div></div>`).join('')
       :`<div class="empty">Тогтмол уудаг эмээ нэмбэл цагт нь сануулж, өнөөдрийн хуудсанд гарна.</div>`;
     out+=`</div>`;}
     if(UI.sec==='water')out+=waterCard();
@@ -335,7 +335,7 @@ const H_COLOR={doctor:'#6f9fd2',lab:'#9a80c6',meds:'#c96b6b',water:'#5f9db3',wei
   sleep:'#7d86c4',pulse:'#d0706a',steps:'#7fa88f',dental:'#5f9db3',vaccine:'#b39484',hospital:'#6f8fb3',other:'#8d928d'};
 function lastMeas(k){return D.health.filter(h=>h.type===k).sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0))}
 function nextAppt(k){const t=today();const i=D.items.filter(x=>x.appt===k&&!x.done&&x.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))[0];return i?dayLabel(i.date).replace(/ .*/,''):''}
-function medToday(){const t=today(),log=D.medLog[t]||{};let tot=0,tk=0;D.meds.forEach(m=>(m.times||[]).forEach(x=>{tot++;if(log[m.id+'@'+x])tk++}));return {tot,tk}}
+function medToday(){const t=today(),log=D.medLog[t]||{};let tot=0,tk=0;medDoses(t).forEach(({m,x})=>{tot++;if(log[m.id+'@'+x])tk++});return {tot,tk}}
 function healthRing(){
   const t=today();const md=medToday();const w=D.water[t]||0,g=D.settings.waterGoal||8;
   const mv=k=>{const h=lastMeas(k)[0];return h?(k==='bp'?h.value+'/'+(h.value2||'?'):fmtH(h.value)+(k==='weight'?'кг':k==='sleep'?'ц':'')):''};
@@ -355,8 +355,8 @@ function healthRing(){
 }
 function addWater(){const t=today();D.water[t]=(D.water[t]||0)+1;save();render();const g=D.settings.waterGoal||8;toast('💧 '+D.water[t]+'/'+g+' аяга'+(D.water[t]===g?' — зорилгоо биелүүллээ!':''))}
 function medsSheet(){
-  const t=today(),log=D.medLog[t]||{};const doses=[];D.meds.forEach(m=>(m.times||[]).forEach(x=>doses.push({m,x})));doses.sort((a,b)=>a.x.localeCompare(b.x));
-  openSheet(`<h3>Өнөөдрийн эм</h3>${doses.length?doses.map(({m,x})=>{const k=m.id+'@'+x;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}');medsSheet()"><span class="tm">${x}</span><div class="main"><div class="ttl">${esc(m.name)}</div>${m.dose?`<div class="meta">${esc(m.dose)}</div>`:''}</div></div>`}).join(''):'<div class="empty">Эм нэмээгүй байна.</div>'}
+  const t=today(),log=D.medLog[t]||{};const doses=medDoses(t);
+  openSheet(`<h3>Өнөөдрийн эм</h3>${doses.length?doses.map(({m,x})=>{const k=m.id+'@'+x;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}');medsSheet()"><span class="tm">${x}</span><div class="main"><div class="ttl">${esc(m.name)}</div>${m.dose||m.days?`<div class="meta">${[esc(m.dose||''),medCourse(m,t)].filter(Boolean).join(' · ')}</div>`:''}</div></div>`}).join(''):'<div class="empty">Өнөөдөр уух эм алга.</div>'}
     <div class="row-btns"><button class="btn sm ghost" onclick="closeSheet();UI.sec='meds';UI.back='health';UI.subTitle='Эм';render()">Эмийн жагсаалт</button><span class="sp"></span><button class="btn sm primary" onclick="medForm(null)">+ Эм нэмэх</button></div>`);
 }
 function spark(vals,col){
@@ -367,7 +367,7 @@ function spark(vals,col){
 function healthReport(){
   const t=today();const days=[...Array(7)].map((_,k)=>addDays(t,-k));
   const first=Object.keys(D.medLog).filter(d=>Object.keys(D.medLog[d]||{}).length).sort()[0]||t; // бүртгэж эхэлсэн өдрөөс
-  let sch=0,tk=0;days.filter(d=>d>=first).forEach(d=>{const log=D.medLog[d]||{};D.meds.forEach(m=>(m.times||[]).forEach(x=>{sch++;if(log[m.id+'@'+x])tk++}))});
+  let sch=0,tk=0;days.filter(d=>d>=first).forEach(d=>{const log=D.medLog[d]||{};medDoses(d).forEach(({m,x})=>{sch++;if(log[m.id+'@'+x])tk++})});
   const wAvg=days.reduce((a,d)=>a+(D.water[d]||0),0)/7;
   const rows=Object.keys(MEAS).map(k=>{const L=lastMeas(k);if(!L.length)return '';const last=L[0],prev=L[1];
     const unit=MEAS[k].u;let ch='';if(prev){const dv=Math.round(((+last.value)-(+prev.value))*10)/10;ch=dv===0?'өөрчлөлтгүй':(dv>0?'▲ ':'▼ ')+Math.abs(dv)+(k==='bp'?'':' '+unit)}
@@ -382,7 +382,7 @@ function healthReport(){
 }
 const measVal=h=>h.type==='bp'?`${h.value}/${h.value2||'?'}`:`${h.value} ${MEAS[h.type].u}`;
 function toggleMed(k){const t=today();D.medLog[t]=D.medLog[t]||{};D.medLog[t][k]=!D.medLog[t][k];if(!D.medLog[t][k])delete D.medLog[t][k];save();render()}
-function medStreak(m){let n=0,d=today();const full=day=>(m.times||[]).every(tm=>(D.medLog[day]||{})[m.id+'@'+tm]);if(!full(d))d=addDays(d,-1);while(full(d)&&n<999){n++;d=addDays(d,-1)}return n}
+function medStreak(m){let n=0,d=today();const full=day=>medOn(m,day)&&(m.times||[]).every(tm=>(D.medLog[day]||{})[m.id+'@'+tm]);if(!full(d))d=addDays(d,-1);while(full(d)&&n<999){n++;d=addDays(d,-1)}return n}
 function toggleHabit(id){const t=today();D.habitLog[t]=D.habitLog[t]||{};D.habitLog[t][id]=!D.habitLog[t][id];if(!D.habitLog[t][id])delete D.habitLog[t][id];save();render()}
 function streak(id){let n=0,d=today();if(!(D.habitLog[d]||{})[id])d=addDays(d,-1);while((D.habitLog[d]||{})[id]&&n<9999){n++;d=addDays(d,-1)}return n}
 function addShop(){const el=$('#shopIn');const v=el.value.trim();if(!v)return;v.split(/[,;]/).map(x=>x.trim()).filter(Boolean).forEach(x=>D.shopping.push({id:uid(),text:x,done:false}));save();render();setTimeout(()=>$('#shopIn')&&$('#shopIn').focus(),0)}

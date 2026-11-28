@@ -148,10 +148,21 @@ function billForm(id){
     onDelete:isNew?null:()=>{D.bills=D.bills.filter(x=>x.id!==b.id)}});
 }
 function medForm(id){
-  let m=id?D.meds.find(x=>x.id===id):null;const isNew=!m;if(!m)m={name:'',dose:'',times:['08:00']};
+  let m=id?D.meds.find(x=>x.id===id):null;const isNew=!m;if(!m)m={name:'',dose:'',times:['08:00'],days:null,start:today(),rep:5};
+  const tms=(m.times&&m.times.length?m.times:['08:00']);
+  const tInputs=L=>L.map((t,i)=>`<input type="time" class="medT" value="${t}" aria-label="${i+1}-р удаа" style="flex:1 1 30%;min-width:90px">`).join('');
   openForm({title:'Эм',fields:[{k:'name',l:'Эмийн нэр',value:m.name},{k:'dose',l:'Тун',value:m.dose,ph:'1 шахмал, 500мг…'},
-    {k:'times',l:'Уух цагууд (таслалаар)',value:(m.times||[]).join(', '),ph:'08:00, 20:00'}],
-    onSave:o=>{if(!o.name)return false;o.times=o.times.split(/[,\s]+/).map(t=>{const mm=t.match(/^(\d{1,2})(?::(\d{2}))?$/);return mm&&+mm[1]<24?pad(+mm[1])+':'+(mm[2]||'00'):null}).filter(Boolean).sort();
+    {k:'freq',l:'Өдөрт хэдэн удаа уух',type:'select',value:tms.length,options:[1,2,3,4,5,6,7,8].map(n=>[n,n+' удаа'])}],
+    extra:`<div class="fld"><label>Уух цагууд (цаг дээр дарж өөрчилнө)</label><div id="medTimes" style="display:flex;flex-wrap:wrap;gap:6px">${tInputs(tms)}</div></div>
+      <div class="fld2"><div class="fld"><label for="f_mdays">Хэдэн хоног уух</label><input id="f_mdays" type="number" inputmode="numeric" min="1" value="${m.days||''}" placeholder="Хоосон = тогтмол"></div>
+      <div class="fld"><label for="f_mstart">Эхэлсэн өдөр</label><input id="f_mstart" type="date" value="${m.start||today()}"></div></div>
+      <div class="fld"><label for="f_mrep">Уусан гэж дарах хүртэл давтан сануулах</label><select id="f_mrep">${[[5,'5 минут тутам'],[10,'10 минут тутам'],[0,'Давтахгүй']].map(([v,l])=>`<option value="${v}" ${medRep(m)===v?'selected':''}>${l}</option>`).join('')}</select></div>`,
+    onOpen:()=>{$('#f_freq').onchange=()=>{const n=+$('#f_freq').value,cur=[...document.querySelectorAll('.medT')].map(e=>e.value);
+      $('#medTimes').innerHTML=tInputs(n===cur.length?cur:medAutoTimes(n))}},
+    onSave:o=>{if(!o.name)return false;delete o.freq;
+      o.times=[...new Set([...document.querySelectorAll('.medT')].map(e=>e.value).filter(Boolean))].sort();
+      if(!o.times.length){toast('Уух цагаа оруулна уу');return false}
+      const dv=parseInt($('#f_mdays').value,10);o.days=dv>0?dv:null;o.start=$('#f_mstart').value||today();o.rep=+$('#f_mrep').value;
       if(isNew)D.meds.push(Object.assign({id:uid()},o));else Object.assign(m,o)},
     onDelete:isNew?null:()=>{D.meds=D.meds.filter(x=>x.id!==m.id)}});
 }

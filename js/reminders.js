@@ -21,8 +21,10 @@ function checkReminders(){
       // апп хаалттай байсан бол ч цаг нь болохоос өмнө нээхэд нэг удаа сануулна
       if(n>=at&&n<Math.max(start,at+W))fire('i'+i.id+day+'_'+k,title,body)})})});
   const mins=n.getHours()*60+n.getMinutes();
-  D.meds.forEach(m=>(m.times||[]).forEach(x=>{const k=m.id+'@'+x;if((D.medLog[t]||{})[k])return;const d=mins-toMin(x);
-    if(d>=0&&d<60)fire('m'+k+t,'💊 '+m.name,'Эм уух цаг '+x+(m.dose?' · '+m.dose:''))}));
+  // Эм: цагт нь, дараа нь "уусан" гэж тэмдэглэх хүртэл 5/10 мин тутам (1 цагийн турш)
+  medDoses(t).forEach(({m,x})=>{const k=m.id+'@'+x;if((D.medLog[t]||{})[k])return;const d=mins-toMin(x),rp=medRep(m);
+    if(d<0||d>=60)return;const n=rp?Math.floor(d/rp):0;
+    fire('m'+k+t+(n?'_'+n:''),n?'⏰ Эмээ уусан уу? '+m.name:'💊 '+m.name,'Эм уух цаг '+x+(m.dose?' · '+m.dose:''))});
   if(mins>=8*60&&mins<12*60){
     const tasks=D.items.filter(i=>!i.time&&occurs(i,t)&&!isDone(i,t)).length;
     const bills=billsDue(1).length;

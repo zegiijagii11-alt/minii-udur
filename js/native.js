@@ -23,10 +23,13 @@
         const title=(i.appt?(APPT[i.appt]||APPT.other).i+' ':i.type==='event'?'📅 ':'✅ ')+i.title;
         const body=dayLabel(day)+' '+i.time+(i.place?' · '+i.place:'')+(i.prep?' · '+i.prep:'');
         [i.remind,i.remind2].forEach(r=>{if(r===undefined||r===null||r===''||+r<0)return;add(r==='eve'?dt(addDays(day,-1),'20:00'):start-(+r||0)*60000,title,body)})});
-      // Эм: цагт нь + 30 мин дараа дахин
-      const log=D.medLog[day]||{};
-      D.meds.forEach(m=>(m.times||[]).forEach(x=>{const key=m.id+'@'+x;if(log[key])return;const at=dt(day,x);const body=m.name+(m.dose?' — '+m.dose:'')+' ('+x+')';
-        add(at,'💊 Эм уух цаг боллоо',body,{key,date:day},true);add(at+30*60000,'⏰ Эмээ уусан уу?',body,{key,date:day},true)}));
+      // Эм: цагт нь, дараа нь "Уусан" дарах хүртэл 5/10 мин тутам 1 цагийн турш (сэрүүлэг шиг). Ойрын 3 өдөрт давтана.
+      const log=D.medLog[day]||{},snz=lsGet('mu.medSnooze')||{};
+      medDoses(day).forEach(({m,x})=>{const key=m.id+'@'+x;if(log[key])return;const at=dt(day,x),ex={key,date:day};const body=m.name+(m.dose?' — '+m.dose:'')+' ('+x+')';
+        const until=snz[day+key]||0,rp=medRep(m);
+        if(at>=until)add(at,'💊 Эм уух цаг боллоо',body,ex,true);
+        if(until>at)add(until,'⏰ Эмээ уусан уу?',body,ex,true);
+        if(rp&&k<3)for(let j=1;j*rp<=60;j++){const a=at+j*rp*60000;if(a>until)add(a,'⏰ Эмээ уусан уу?',body,ex,true)}});
       // Өглөөний тойм
       const tasks=D.items.filter(i=>!i.time&&occurs(i,day)&&!isDone(i,day)).length;
       if(tasks)add(dt(day,'08:00'),'☀️ Өнөөдөр',tasks+' ажил хийх төлөвлөгөөтэй');
@@ -47,16 +50,23 @@
     const pending=(await LN.getPending()).notifications||[];
     const cancel=pending.filter(x=>x.id<SNOOZE_BASE).map(x=>({id:x.id}));
     if(cancel.length)await LN.cancel({notifications:cancel});
+    await clearTaken();
     const list=build().map((x,i)=>({id:1000+i,channelId:CH,title:x.title,body:x.body,schedule:{at:new Date(x.at),allowWhileIdle:true},autoCancel:true,
       ...(x.med?{actionTypeId:MED,group:'med-'+x.extra.date+x.extra.key,extra:x.extra}:x.extra?{extra:x.extra}:{})}));
     if(list.length)await LN.schedule({notifications:list});
   }
+  // Уусан эмийн мэдэгдлийг (давталтуудыг ч) самбараас арилгана
+  async function clearTaken(grp){
+    try{const dl=(await LN.getDeliveredNotifications()).notifications||[];
+      const rm=dl.filter(x=>{const g=String(x.group||'');if(!g.startsWith('med-'))return false;if(grp)return g===grp;return !!(D.medLog[g.slice(4,14)]||{})[g.slice(14)]}).map(x=>({id:x.id}));
+      if(rm.length)await LN.removeDeliveredNotifications({notifications:rm})}catch(e){}
+  }
   async function onAction(ev){
     const n=ev.notification||{},ex=n.extra||{};
     try{
-      if(ev.actionId==='taken'&&ex.key){D.medLog[ex.date]=D.medLog[ex.date]||{};D.medLog[ex.date][ex.key]=true;save();render();toast('✓ Эм уусан гэж тэмдэглэлээ')}
-      else if(ev.actionId==='snooze'){await LN.schedule({notifications:[{id:SNOOZE_BASE+(Math.floor(Date.now()/1000)%90000),channelId:CH,title:'⏰ Эмээ уусан уу?',body:n.body||'',
-        schedule:{at:new Date(Date.now()+SNOOZE_MIN*60000),allowWhileIdle:true},actionTypeId:MED,extra:ex,autoCancel:true}]});toast(SNOOZE_MIN+' минутын дараа дахин сануулна');try{App.minimizeApp()}catch(e){}}
+      if(ev.actionId==='taken'&&ex.key){D.medLog[ex.date]=D.medLog[ex.date]||{};D.medLog[ex.date][ex.key]=true;save();render();await clearTaken('med-'+ex.date+ex.key);toast('✓ Эм уусан гэж тэмдэглэлээ')}
+      else if(ev.actionId==='snooze'&&ex.key){const snz=lsGet('mu.medSnooze')||{},td=today();Object.keys(snz).forEach(k=>{if(k.slice(0,10)<addDays(td,-1))delete snz[k]});
+        snz[ex.date+ex.key]=Date.now()+SNOOZE_MIN*60000;lsSet('mu.medSnooze',snz);await clearTaken('med-'+ex.date+ex.key);toast(SNOOZE_MIN+' минутын дараа дахин сануулна');try{App.minimizeApp()}catch(e){}}
       else if(ex.key){UI.life='health';setView('life')}
       else if(ex.go==='journal')goJournal();
     }catch(e){console.warn(e)}
