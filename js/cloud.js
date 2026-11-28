@@ -1,14 +1,14 @@
 /* ===================== Нэвтрэлт, үүлэн хадгалалт (Firebase) ===================== */
-// Эм & Уналттай нэг Firebase төсөл; мэдээлэл users/{uid}/mu_<хэсэг>/{id} доор тусдаа.
-const FB_CFG={apiKey:"AIzaSyDPa2MvJTEPPdFqcfrxJ9HDyyqJMEuShr0",authDomain:"epilyse--2026.firebaseapp.com",projectId:"epilyse--2026",
-  storageBucket:"epilyse--2026.firebasestorage.app",messagingSenderId:"1002632017161",appId:"1:1002632017161:web:bf5b3aaac4835d63e68fd8"};
+// Миний өдрийн тусдаа Firebase төсөл (2026-11-28-нд epilyse--2026-оос салгасан); мэдээлэл users/{uid}/mu_<хэсэг>/{id} доор.
+const FB_CFG={apiKey:"AIzaSyDTwVGQvMOcaWdPyoUv15m8QmI96C9Wo7U",authDomain:"minii-udur.firebaseapp.com",projectId:"minii-udur",
+  storageBucket:"minii-udur.firebasestorage.app",messagingSenderId:"358636659499",appId:"1:358636659499:web:24742281a844ea6d1f1b6e"};
 const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
-const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up';
+const OWNER_KEY=KEY+'.owner',SY_KEY=KEY+'.sync',UP_KEY=KEY+'.up',PROJ_KEY=KEY+'.proj';
 const SYNC_COLS=['items','notes','tx','bills','meds','health','habits','shopping','chores','ot','reports'];
 const META_SET=['name','avatar','waterGoal','otRate','shiftLink','rtLink','rooms','contrastRooms','reportRemind'];
 // Хүснэгтийн холболт: тусдаа баримт. mu_meta-д байвал v1.8.1 ба түүнээс өмнөх хувилбар (энэ түлхүүрүүдийг мэдэхгүй) буцааж бичихдээ арилгадаг.
 const SHEET_SET=['rosterUrl','rosterKey','rosterName','rosterMode'];
-const fb={};let fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
+const fb={};let fbMovedMsg='',fbAuth=null,fbDb=null,fbUser=null,fbOK=false,fbUnsubs=[],fbReconciled=false,fbState='',fbErrMsg='',fbSignUp=false;
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 // SYNC-START
@@ -139,8 +139,18 @@ async function cloudPhoto(id){
 }
 // ---- Нэвтрэлт ----
 function showAuth(on,msg,ok){$('#auth').classList.toggle('hidden',!on);if(msg!==undefined){$('#aMsg').textContent=msg;$('#aMsg').classList.toggle('ok',!!ok)}}
+// Firebase төсөл солигдсон бол: утсан дээрх мэдээллийг ҮЛДЭЭЖ, нэвтрэлт ба синкийн төлөвийг л цэвэрлэнэ.
+// Дахин нэвтрэхэд энэ төхөөрөмжийн бүх мэдээлэл шинэ төсөл рүү «шинээр нэмсэн» гэж илгээгдэнэ (устгалгүй, хуучин хэрэглэгчийн шалгалтгүй).
+function cloudMigrate(){
+  if(lsGet(PROJ_KEY)===FB_CFG.projectId)return false;
+  const had=!!lsGet(OWNER_KEY);
+  if(had){try{localStorage.removeItem(OWNER_KEY);localStorage.removeItem(UP_KEY)}catch(e){}SY={};lsSet(SY_KEY,SY)}
+  lsSet(PROJ_KEY,FB_CFG.projectId);return had;
+}
 async function cloudInit(){
+  const moved=cloudMigrate();
   const owner=lsGet(OWNER_KEY);
+  if(moved){fbMovedMsg='Апп шинэ сервер рүү шилжлээ. Мэдээлэл тань энэ төхөөрөмжид хадгалагдсан байгаа — дахин нэг удаа нэвтэрнэ үү.';showAuth(true,fbMovedMsg,true)}
   if(!owner)showAuth(true,'Ачаалж байна…',true);
   try{
     const mods=await Promise.race([Promise.all(['firebase-app.js','firebase-auth.js','firebase-firestore.js'].map(f=>import(FB_SDK+f))),
@@ -148,7 +158,7 @@ async function cloudInit(){
     mods.forEach(m=>Object.assign(fb,m));
     const app=fb.initializeApp(FB_CFG);fbAuth=fb.getAuth(app);fbAuth.languageCode='mn';
     try{fbDb=fb.initializeFirestore(app,{localCache:fb.persistentLocalCache({tabManager:fb.persistentMultipleTabManager()})})}catch(e){fbDb=fb.getFirestore(app)}
-    fbOK=true;if(!owner)showAuth(true,'');
+    fbOK=true;if(!owner&&!moved)showAuth(true,'');
     fb.getRedirectResult(fbAuth).catch(e=>showAuth(true,authErr(e)));
     fb.onAuthStateChanged(fbAuth,onUser);
   }catch(e){
@@ -158,7 +168,8 @@ async function cloudInit(){
 }
 function onUser(u){
   fbUser=u;
-  if(!u){cloudUnsub();fbReconciled=false;showAuth(true,'');return}
+  if(!u){cloudUnsub();fbReconciled=false;showAuth(true,fbMovedMsg,!!fbMovedMsg);return}
+  fbMovedMsg='';
   const owner=lsGet(OWNER_KEY);
   if(owner&&owner!==u.uid)wipeLocal(); // өөр хүний мэдээллийг холихгүй
   lsSet(OWNER_KEY,u.uid);
