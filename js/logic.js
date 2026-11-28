@@ -45,7 +45,10 @@ const medRep=m=>m.rep===undefined||m.rep===null?5:+m.rep;
 function medDoses(day){const L=[];D.meds.forEach(m=>{if(medOn(m,day))(m.times||[]).forEach(x=>L.push({m,x}))});return L.sort((a,b)=>a.x.localeCompare(b.x))}
 function medCourse(m,day){ // "7 хоног: 3-р өдөр" / "дууссан" / "эхлээгүй"
   if(!m.days)return '';const s=m.start||day;if(day<s)return 'эхлэх: '+dayLabel(s);const n=medDayN(m,day);
-  return n>m.days?'дууссан':m.days+' хоног: '+n+'-р өдөр'+(m.days-n?' ('+(m.days-n)+' үлдсэн)':' (сүүлийн)')}
+  return n>m.days?'дууссан':m.days+' хоногоос '+n+'-р өдөр'+(m.days-n?' ('+(m.days-n)+' үлдсэн)':' (сүүлийн)')}
+// Өнөөдөр: "5 уухаас 2 уусан"
+function medTodayTxt(m,day){if(!medOn(m,day))return '';const T=m.times||[],log=D.medLog[day]||{};const n=T.filter(x=>log[m.id+'@'+x]).length;
+  return 'Өнөөдөр '+T.length+' уухаас '+n+' уусан'}
 // Өдөрт n удаа → цагуудыг жигд хуваана (1: 08:00, 3: 08/14/20, 5: 07–21)
 function medAutoTimes(n){if(n<=1)return ['08:00'];const a=n>=5?420:480,b=n>=5?1260:1200,st=(b-a)/(n-1);
   return [...Array(n)].map((_,i)=>{const v=Math.round((a+st*i)/15)*15;return pad(Math.floor(v/60))+':'+pad(v%60)})}
