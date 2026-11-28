@@ -33,6 +33,8 @@
       // Өглөөний тойм
       const tasks=D.items.filter(i=>!i.time&&occurs(i,day)&&!isDone(i,day)).length;
       if(tasks)add(dt(day,'08:00'),'☀️ Өнөөдөр',tasks+' ажил хийх төлөвлөгөөтэй');
+      // Оройн 20:00: тухайн өдөр хийгдээгүй ажил (ажил дуусгах бүрт дахин тооцно)
+      const und=undoneTasks(day);if(und.length)add(dt(day,UNDONE_AT),'📝 Хийгдээгүй ажил байна',undoneBody(und)+' — хийгээрэй',{go:'today'});
       // Оройн 2 минут
       if(!(D.journal[day]&&D.journal[day].mood))add(dt(day,'21:00'),'✍️ Оройн 2 минут','Өнөөдөр ямар байв? Дарж тэмдэглэл бичээрэй',{go:'journal'});
       // Тайлан
@@ -52,13 +54,14 @@
     if(cancel.length)await LN.cancel({notifications:cancel});
     await clearTaken();
     const list=build().map((x,i)=>({id:1000+i,channelId:CH,title:x.title,body:x.body,schedule:{at:new Date(x.at),allowWhileIdle:true},autoCancel:true,
-      ...(x.med?{actionTypeId:MED,group:'med-'+x.extra.date+x.extra.key,extra:x.extra}:x.extra?{extra:x.extra}:{})}));
+      // Эм: шударч арилгахгүй (ongoing) — «Уусан ✓» эсвэл «Дараа» дарж байж алга болно
+      ...(x.med?{actionTypeId:MED,group:'med-'+x.extra.date+x.extra.key,extra:x.extra,ongoing:true,autoCancel:false}:x.extra?{extra:x.extra}:{})}));
     if(list.length)await LN.schedule({notifications:list});
   }
   // Уусан эмийн мэдэгдлийг (давталтуудыг ч) самбараас арилгана
   async function clearTaken(grp){
     try{const dl=(await LN.getDeliveredNotifications()).notifications||[];
-      const rm=dl.filter(x=>{const g=String(x.group||'');if(!g.startsWith('med-'))return false;if(grp)return g===grp;return !!(D.medLog[g.slice(4,14)]||{})[g.slice(14)]}).map(x=>({id:x.id}));
+      const rm=dl.filter(x=>{const g=String(x.group||'');if(!g.startsWith('med-'))return false;if(grp)return g===grp;const d=g.slice(4,14);return d<today()||!!(D.medLog[d]||{})[g.slice(14)]}).map(x=>({id:x.id})); // уусан, эсвэл өнгөрсөн өдрийнх
       if(rm.length)await LN.removeDeliveredNotifications({notifications:rm})}catch(e){}
   }
   async function onAction(ev){
@@ -69,6 +72,7 @@
         snz[ex.date+ex.key]=Date.now()+SNOOZE_MIN*60000;lsSet('mu.medSnooze',snz);await clearTaken('med-'+ex.date+ex.key);toast(SNOOZE_MIN+' минутын дараа дахин сануулна');try{App.minimizeApp()}catch(e){}}
       else if(ex.key){UI.life='health';setView('life')}
       else if(ex.go==='journal')goJournal();
+      else if(ex.go==='today')setView('today');
     }catch(e){console.warn(e)}
     resync();
   }

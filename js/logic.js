@@ -30,7 +30,8 @@ function itemRow(i,day,opts={}){
   if(i.repeat)meta.push('↻ давтагдана');
   if(overdue)meta.push('<span class="tag bad">хоцорсон</span>');
   if(i.note)meta.push('📎');
-  return `<div class="row ${done?'done':''}">
+  const st=done?'st-ok':day<=today()?'st-no':'';
+  return `<div class="row ${st}">
     <input type="checkbox" class="cb" ${done?'checked':''} onchange="toggleItem('${i.id}','${day}')" aria-label="Дууссан">
     ${i.time?`<span class="tm">${i.time}</span>`:''}
     <div class="main" onclick="itemForm('${i.id}')"><div class="ttl">${i.appt?(APPT[i.appt]||APPT.other).i+' ':''}${esc(i.title)}</div><div class="meta">${meta.join(' · ')}</div></div>
@@ -48,3 +49,8 @@ function medCourse(m,day){ // "7 хоног: 3-р өдөр" / "дууссан" /
 // Өдөрт n удаа → цагуудыг жигд хуваана (1: 08:00, 3: 08/14/20, 5: 07–21)
 function medAutoTimes(n){if(n<=1)return ['08:00'];const a=n>=5?420:480,b=n>=5?1260:1200,st=(b-a)/(n-1);
   return [...Array(n)].map((_,i)=>{const v=Math.round((a+st*i)/15)*15;return pad(Math.floor(v/60))+':'+pad(v%60)})}
+
+// Тухайн өдөр хийгдээгүй ажил (уулзалт, эмчийн цаг биш) — оройн 20:00-ийн сануулгад
+const UNDONE_AT='20:00';
+function undoneTasks(day){return D.items.filter(i=>i.type!=='event'&&!i.appt&&occurs(i,day)&&!isDone(i,day))}
+function undoneBody(L){return L.length+' ажил үлдсэн: '+L.slice(0,3).map(i=>i.title).join(', ')+(L.length>3?'…':'')}

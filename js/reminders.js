@@ -30,6 +30,8 @@ function checkReminders(){
     const bills=billsDue(1).length;
     if(tasks||bills)fire('morning'+t,'☀️ Өнөөдөр',[tasks?tasks+' ажил':'',bills?bills+' төлбөр ойртсон':''].filter(Boolean).join(', '));
   }
+  // Оройн 20:00: өнөөдөр хийгдээгүй ажил
+  if(mins>=toMin(UNDONE_AT)&&mins<23*60){const L=undoneTasks(t);if(L.length)fire('und'+t,'📝 Хийгдээгүй ажил байна',undoneBody(L)+' — хийгээрэй')}
   // Тайлан бичих сануулга (сүүлийн 2 долоо хоногт тайлан бичсэн бол)
   const rr=D.settings.reportRemind;if(rr&&repActive()&&mins>=toMin(rr)&&mins<toMin(rr)+240&&!repGet(t))fire('rep'+t,'📋 Тайлан','Өнөөдөр аль өрөөнд хэдэн хүн оруулснаа бичих үү?');
   // Сарын сүүлийн өдөр: илүү цагийн нэгтгэл

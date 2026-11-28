@@ -25,7 +25,7 @@ function vToday(){
     medDoses(t).forEach(({m,x})=>doses.push({m,tm:x}));
     const taken=doses.filter(x=>log[x.m.id+'@'+x.tm]).length;
     out+=`<div class="card"><h2>Эм<span class="sp"></span><span class="tag ${taken===doses.length?'ok':''}">${taken}/${doses.length}</span></h2>`+
-      doses.map(x=>{const k=x.m.id+'@'+x.tm;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}')"><span class="tm">${x.tm}</span><div class="main"><div class="ttl">${esc(x.m.name)}</div>${x.m.dose||x.m.days?`<div class="meta">${[esc(x.m.dose||''),medCourse(x.m,t)].filter(Boolean).join(' · ')}</div>`:''}</div></div>`}).join('')+`</div>`;
+      doses.map(x=>{const k=x.m.id+'@'+x.tm;return `<div class="row ${log[k]?'st-ok':'st-no'}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}')"><span class="tm">${x.tm}</span><div class="main"><div class="ttl">${esc(x.m.name)}</div>${x.m.dose||x.m.days?`<div class="meta">${[esc(x.m.dose||''),medCourse(x.m,t)].filter(Boolean).join(' · ')}</div>`:''}</div></div>`}).join('')+`</div>`;
   }
   // Зуршил + ус
   if(D.habits.length){
@@ -356,7 +356,7 @@ function healthRing(){
 function addWater(){const t=today();D.water[t]=(D.water[t]||0)+1;save();render();const g=D.settings.waterGoal||8;toast('💧 '+D.water[t]+'/'+g+' аяга'+(D.water[t]===g?' — зорилгоо биелүүллээ!':''))}
 function medsSheet(){
   const t=today(),log=D.medLog[t]||{};const doses=medDoses(t);
-  openSheet(`<h3>Өнөөдрийн эм</h3>${doses.length?doses.map(({m,x})=>{const k=m.id+'@'+x;return `<div class="row ${log[k]?'done':''}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}');medsSheet()"><span class="tm">${x}</span><div class="main"><div class="ttl">${esc(m.name)}</div>${m.dose||m.days?`<div class="meta">${[esc(m.dose||''),medCourse(m,t)].filter(Boolean).join(' · ')}</div>`:''}</div></div>`}).join(''):'<div class="empty">Өнөөдөр уух эм алга.</div>'}
+  openSheet(`<h3>Өнөөдрийн эм</h3>${doses.length?doses.map(({m,x})=>{const k=m.id+'@'+x;return `<div class="row ${log[k]?'st-ok':'st-no'}"><input type="checkbox" class="cb" ${log[k]?'checked':''} onchange="toggleMed('${k}');medsSheet()"><span class="tm">${x}</span><div class="main"><div class="ttl">${esc(m.name)}</div>${m.dose||m.days?`<div class="meta">${[esc(m.dose||''),medCourse(m,t)].filter(Boolean).join(' · ')}</div>`:''}</div></div>`}).join(''):'<div class="empty">Өнөөдөр уух эм алга.</div>'}
     <div class="row-btns"><button class="btn sm ghost" onclick="closeSheet();UI.sec='meds';UI.back='health';UI.subTitle='Эм';render()">Эмийн жагсаалт</button><span class="sp"></span><button class="btn sm primary" onclick="medForm(null)">+ Эм нэмэх</button></div>`);
 }
 function spark(vals,col){

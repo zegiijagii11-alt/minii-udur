@@ -173,6 +173,13 @@ main{padding:0 16px 72px;max-width:720px;margin:0 auto}
 .row .ttl{overflow-wrap:anywhere}
 .row .meta{color:var(--muted);font-size:.8rem;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row.done .ttl{text-decoration:line-through;color:var(--muted)}
+/* Эм, ажил: хийсэн = ногоон, хийгээгүй = улаан (зураасгүй) */
+.row.st-ok .ttl,.row.st-no .ttl{text-decoration:none}
+.row.st-ok .ttl{color:var(--ok);font-weight:600}
+.row.st-no .ttl{color:var(--bad)}
+.row.st-no .cb{border-color:var(--bad)}
+.row.st-ok,.row.st-no{border-left:4px solid var(--ok);padding-left:8px;margin-left:-2px}
+.row.st-no{border-left-color:var(--bad)}
 .tm{font-variant-numeric:tabular-nums;font-weight:600;min-width:48px;color:var(--pri)}
 .cb{appearance:none;-webkit-appearance:none;width:24px;height:24px;min-width:24px;border:2px solid var(--line);border-color:color-mix(in srgb,var(--muted) 55%,transparent);border-radius:50%;padding:0;background:transparent;display:grid;place-items:center;cursor:pointer}
 .cb:checked{background:var(--ok);border-color:var(--ok)}
