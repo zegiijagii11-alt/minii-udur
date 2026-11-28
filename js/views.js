@@ -91,8 +91,8 @@ function groups(){
   return {
     ajil:{l:'Ажил',ic:'ajil',subs:[
       {k:'today',l:'Ажлын төлөвлөгөө',n:pend('ajil'),go:()=>goPlan('ajil')},
-      rosterOn()?{k:'scan',l:'RT exam CT',go:()=>openRt()}:{k:'scan',l:'RT exam CT ↗',act:()=>window.open(rtLink(),'_blank')},
-      {k:'link',l:'Ээлжийн хуваарь',go:()=>openRoster()},
+      // Ажлын хүснэгтүүд: зөвхөн холболттой (хуваарийн холбоос+түлхүүр оруулсан) хүнд харагдана
+      ...(rosterOn()?[{k:'scan',l:'RT exam CT',go:()=>openRt()},{k:'link',l:'Ээлжийн хуваарь',go:()=>openRoster()}]:[]),
       {k:'scan',l:'Тайлан',n:reportMissing(),go:()=>{UI.repDay=null;setView('report')}},
       {k:'clock',l:'Илүү цаг',go:()=>{UI.otMonth=null;setView('ot')}},
       {k:'plus',l:'Ажил нэмэх',act:()=>itemForm(null,{cat:'ajil',date:today()})},
@@ -256,7 +256,7 @@ function vReport(){
     ${L.length?`<div style="overflow-x:auto"><table class="extab"><tr><th>Өдөр</th>${cols.map(([k,,s])=>`<th>${esc(k)}${s?`<br><small>${s}</small>`:''}</th>`).join('')}<th>Нийт</th></tr>
       ${L.slice().reverse().map(x=>`<tr onclick="UI.repDay='${x.date}';render();window.scrollTo(0,0)" class="${x.date===d?'on':''}"><td>${dayLabel(x.date)}${x.note?' 📝':''}</td>${cols.map(([k,mode])=>`<td>${rv((x.rooms||{})[k])[mode]||''}</td>`).join('')}<td><b>${repTotal(x)}</b></td></tr>`).join('')}
       <tr class="sum"><td>Нийт</td>${cols.map(c=>`<td>${colTot(c)}</td>`).join('')}<td>${all}</td></tr></table></div>`:'<div class="empty">Энэ сард тайлан бичээгүй байна. Дээрх + товчоор хүн бүрийг нэмээрэй.</div>'}
-    <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="repShare('${mo}')" ${L.length?'':'disabled'}>Нэгтгэл хуваалцах</button><button class="btn sm" onclick="window.open(rtLink(),'_blank')">RT exam CT ↗</button><button class="btn sm ghost" onclick="roomsForm()">Өрөөнүүд / сануулга</button></div></div>`;
+    <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="repShare('${mo}')" ${L.length?'':'disabled'}>Нэгтгэл хуваалцах</button>${rosterOn()?'<button class="btn sm" onclick="openRt()">RT exam CT</button>':''}<button class="btn sm ghost" onclick="roomsForm()">Өрөөнүүд / сануулга</button></div></div>`;
   return out;
 }
 function repEdit(d){const r=(repGet(d)||{}).rooms||{};
@@ -297,7 +297,7 @@ function openMenu(){
       ${row('today','Өнөөдөр',"setView('today')")}
       ${Object.entries(groups()).map(([k,g])=>row(g.ic,g.l,`openGroup('${k}')`,sumN(g))).join('')}
       <div class="dr-sec">Бусад</div>
-      ${row('search','Хайх','openSearch()')}${rosterOn()?row('scan','RT exam CT','openRt()'):row('scan','RT exam CT ↗',"window.open(rtLink(),'_blank')")}${row('link','Ээлжийн хуваарь','openRoster()')}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
+      ${row('search','Хайх','openSearch()')}${rosterOn()?row('scan','RT exam CT','openRt()')+row('link','Ээлжийн хуваарь','openRoster()'):''}${row('clock','Илүү цаг',"UI.otMonth=null;setView('ot')")}${row('backup','Нөөц хуулбар авах','exportBackup()')}${row('settings','Тохиргоо','openSettings()')}${fbUser?row('logout','Гарах','logout()'):''}
     </div>`;
   $('#drawer').classList.remove('hidden');
 }

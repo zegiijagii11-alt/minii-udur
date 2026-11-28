@@ -1,4 +1,4 @@
-const CACHE = 'minii-udur-v1.9.3';
+const CACHE = 'minii-udur-v1.9.4';
 const ASSETS = ["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","css/style.css","js/cloud.js","js/data.js","js/forms.js","js/logic.js","js/main.js","js/native.js","js/pages.js","js/reminders.js","js/roster.js","js/rtsheet.js","js/settings.js","js/views.js"];
 const FB_SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 
